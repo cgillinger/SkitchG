@@ -24,7 +24,12 @@ from .export import render_annotated
 from .icons import make_color_icon, make_icon
 from .palette import DEFAULT_STROKE, PALETTE, STROKE_SIZES
 
-IMAGE_FILTER = "Images (*.png *.jpg *.jpeg *.webp *.bmp);;All files (*)"
+# Native Linux file dialogs match glob patterns case-sensitively,
+# so uppercase variants (IMG_0001.JPG from cameras/iPhones) are listed too.
+IMAGE_FILTER = (
+    "Images (*.png *.PNG *.jpg *.JPG *.jpeg *.JPEG *.webp *.WEBP *.bmp *.BMP);;"
+    "All files (*)"
+)
 
 TOOLS = [
     ("select", "Select / Move", "V"),
