@@ -38,6 +38,7 @@ TOOLS = [
     ("rect", "Rectangle", "R"),
     ("ellipse", "Ellipse", "E"),
     ("pen", "Pen", "P"),
+    ("highlight", "Highlighter", "H"),
     ("text", "Text", "T"),
     ("marker", "Numbered marker", "M"),
     ("pixelate", "Pixelate", "X"),

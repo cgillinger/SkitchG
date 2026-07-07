@@ -74,6 +74,8 @@ class AnnotationItem(QGraphicsItem):
         self.setFlag(QGraphicsItem.ItemIsSelectable, True)
         self.setFlag(QGraphicsItem.ItemIsMovable, True)
         self.setFlag(QGraphicsItem.ItemSendsGeometryChanges, True)
+        # Signals "grab me to move" when hovering, whatever tool is active.
+        self.setCursor(Qt.SizeAllCursor)
         self._handles = []
         self._drag_start_state = None
 
@@ -465,6 +467,37 @@ class PenItem(AnnotationItem):
         painter.setPen(QPen(self.color, self.stroke_width,
                             Qt.SolidLine, Qt.RoundCap, Qt.RoundJoin))
         painter.drawPath(path)
+        self.paint_selection(painter)
+
+
+class HighlightItem(PenItem):
+    """Freehand highlighter: wide, semi-transparent, never outlined."""
+
+    WIDTH_FACTOR = 3.5
+    ALPHA = 110
+
+    def _width(self):
+        return self.stroke_width * self.WIDTH_FACTOR
+
+    def boundingRect(self):
+        if not self.points:
+            return QRectF()
+        m = self._width() / 2 + 6
+        return self.pen_path().boundingRect().adjusted(-m, -m, m, m)
+
+    def shape(self):
+        stroker = QPainterPathStroker()
+        stroker.setWidth(max(self._width(), 12.0))
+        stroker.setCapStyle(Qt.FlatCap)
+        return stroker.createStroke(self.pen_path())
+
+    def paint(self, painter, option, widget=None):
+        painter.setRenderHint(painter.RenderHint.Antialiasing, True)
+        color = QColor(self.color)
+        color.setAlpha(self.ALPHA)
+        painter.setPen(QPen(color, self._width(),
+                            Qt.SolidLine, Qt.FlatCap, Qt.RoundJoin))
+        painter.drawPath(self.pen_path())
         self.paint_selection(painter)
 
 

@@ -13,7 +13,7 @@ Open an image → drag a big pink arrow → `Ctrl+C` → paste. Done.
 [![Qt for Python](https://img.shields.io/badge/GUI-PySide6%20%2F%20Qt6-41cd52?logo=qt&logoColor=white)](https://doc.qt.io/qtforpython-6/)
 [![Platform: Linux](https://img.shields.io/badge/platform-Linux-FCC624?logo=linux&logoColor=black)](#install)
 [![License: MIT](https://img.shields.io/badge/license-MIT-green)](LICENSE)
-[![Version](https://img.shields.io/badge/version-0.5.0-orange)](https://github.com/cgillinger/SkitchG/releases)
+[![Version](https://img.shields.io/badge/version-0.6.0-orange)](https://github.com/cgillinger/SkitchG/releases)
 
 <img src="docs/demo-annotations.png" alt="SkitchG annotations demo — thick pink Skitch-style arrows, outlined text, rectangle, ellipse and pixelate on light and dark backgrounds" width="700">
 
@@ -47,6 +47,10 @@ No accounts. No cloud. No layers. No dialogs you didn't ask for.
   number in the head; drag to aim the pointer tail, double-click to relabel
 - 🅰️ **Bold outlined text** — click, type, Enter. Done.
 - ⬜ Rectangle, ellipse, line, freehand pen
+- 🖍️ **Highlighter** — wide translucent freehand stroke that tints without
+  hiding what's underneath (pick yellow for the classic look)
+- ✋ **Grab anything to move it** — clicking an existing annotation moves it
+  no matter which tool is active; you only draw on empty areas
 - 🔒 **Pixelate** tool for hiding sensitive information (names, emails, keys)
 - ✂️ Crop
 - ↕️ Select, move and reshape annotations with drag handles
@@ -104,15 +108,16 @@ on image files.
 | `L` | Line | | `Ctrl+Z` | Undo |
 | `P` | Pen | | `Ctrl+Shift+Z` / `Ctrl+Y` | Redo |
 | `M` | Numbered marker | | `Delete` | Delete selected |
-| `X` | Pixelate | | `Esc` | Cancel / deselect |
-| `C` | Crop | | `Ctrl+scroll` | Zoom (`Ctrl+0` fit, `Ctrl+1` 100%) |
-| `V` | Select / move | | `Scroll` | Resize annotations on the fly |
+| `H` | Highlighter | | `Esc` | Cancel / deselect |
+| `X` | Pixelate | | `Ctrl+scroll` | Zoom (`Ctrl+0` fit, `Ctrl+1` 100%) |
+| `C` | Crop | | `Scroll` | Resize annotations on the fly |
+| `V` | Select / move | | | |
 
 ## Usage tips
 
 **Arrows** — click where the tail starts, drag toward what you're pointing
-at, release. Switch to Select (`V`) to move an arrow or drag its endpoint
-handles to reshape it.
+at, release. Grab any existing annotation to move it (no tool switch
+needed), or drag its endpoint handles to reshape it.
 
 **Text** — click, type. `Enter` commits, `Shift+Enter` adds a line,
 `Esc` cancels. Double-click existing text to edit.

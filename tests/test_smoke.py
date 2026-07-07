@@ -205,6 +205,32 @@ def test_smoke():
     assert len(c3.annotation_items()) == n_items, "handle drag created a new item"
     assert (a3.end - QPointF(560, 300)).manhattanLength() < 20, "handle did not move endpoint"
 
+    # Moving by grabbing the body must also work with a drawing tool active
+    c3.scene().clearSelection()
+    pos_before = QPointF(a3.pos())
+    mid = c3.mapFromScene(QPointF(380, 250))  # on the shaft
+    tgt = c3.mapFromScene(QPointF(460, 310))
+    QTest.mousePress(c3.viewport(), _Qt.LeftButton, _Qt.NoModifier, mid)
+    QTest.mouseMove(c3.viewport(), QPoint(tgt.x(), tgt.y()))
+    QTest.mouseRelease(c3.viewport(), _Qt.LeftButton, _Qt.NoModifier, tgt)
+    app.processEvents()
+    assert len(c3.annotation_items()) == n_items, "body drag created a new item"
+    moved = a3.pos() - pos_before
+    assert moved.manhattanLength() > 100, "body drag did not move the arrow"
+    c3.undo_stack.undo()
+    assert a3.pos() == pos_before, "move undo failed"
+
+    # Highlighter: wide translucent stroke, tints but never hides the image
+    from skitchg.items import HighlightItem
+    hl = HighlightItem([QPointF(100, 500), QPointF(700, 500)],
+                       QColor("#FFD400"), 10.0, False)
+    c3.scene().addItem(hl)
+    from skitchg.export import render_annotated as _render
+    out3 = _render(c3)
+    px = out3.pixelColor(400, 500)
+    assert px != QColor("#FFFFFF") and px != QColor("#FFD400"), px.name()
+    assert px.red() > 200 and px.blue() < 255, "not a translucent tint"
+
     # Save default path + clipboard
     assert win._default_save_path().endswith("test_input_annotated.png")
     win._write_image(win._default_save_path())
