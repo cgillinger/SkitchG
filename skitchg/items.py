@@ -592,16 +592,17 @@ class MarkerItem(AnnotationItem):
         self.prepareGeometryChange()
         if tip is not None:
             self.tip = QPointF(tip)
-        if head is not None:
-            head = QPointF(head)
-            # Skitch pins are compact: dragging mostly aims the stubby tail,
-            # so the head stays within a narrow distance band from the tip.
-            v = head - self.tip
-            dist = math.hypot(v.x(), v.y())
-            if dist < 1e-3:
-                v, dist = QPointF(0, -1), 1.0
-            clamped = max(self.radius * 1.45, min(self.radius * 1.95, dist))
-            self.head = self.tip + v * (clamped / dist)
+        if head is None:
+            head = self.head
+        # Skitch pins are compact: the head always stays within a narrow
+        # distance band from the tip, whichever end is being dragged —
+        # moving the tip pulls the head along instead of stretching the pin.
+        v = QPointF(head) - self.tip
+        dist = math.hypot(v.x(), v.y())
+        if dist < 1e-3:
+            v, dist = QPointF(0, -1), 1.0
+        clamped = max(self.radius * 1.45, min(self.radius * 1.95, dist))
+        self.head = self.tip + v * (clamped / dist)
         self._layout_handles()
         self.update()
 
@@ -625,6 +626,7 @@ class MarkerItem(AnnotationItem):
         if radius is not None:
             self.prepareGeometryChange()
             self.radius = float(radius)
+            self.set_geometry()  # keep the pointer inside the new size band
         AnnotationItem.set_style(self, color=color, outline=outline)
 
     def get_style(self):
