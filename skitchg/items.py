@@ -658,10 +658,14 @@ class MarkerItem(AnnotationItem):
             # Aim the pointer: the head orbits the tip toward the mouse.
             self.set_geometry(head=self.tip + (p - self.tip))
 
-    def marker_path(self):
+    def marker_path(self, grow=0.0):
         """Map-pin shape: round head with a short, wide integrated pointer,
-        like the classic Skitch stamps."""
-        r = self.radius
+        like the classic Skitch stamps.
+
+        With grow > 0 the whole pin is offset outward by that many pixels
+        (used to paint the white outline as a larger pin underneath — a
+        stroked pen would shoot miter spikes past the sharp tip)."""
+        r = self.radius + grow
         head_path = QPainterPath()
         head_path.addEllipse(self.head, r, r)
 
@@ -673,11 +677,18 @@ class MarkerItem(AnnotationItem):
         px, py = -uy, ux
         # A crisp, narrow wedge: base well inside the circle (no bulge where
         # it emerges) tapering straight to a sharp point.
-        base_half = r * 0.55
-        base = self.head + QPointF(ux * r * 0.4, uy * r * 0.4)
+        base_half = self.radius * 0.55 + grow
+        base = self.head + QPointF(ux * self.radius * 0.4, uy * self.radius * 0.4)
+        tip_pt = QPointF(self.tip)
+        if grow > 0:
+            # Extend the apex along the axis so the outline keeps an even
+            # margin around the sharp point.
+            length = max(dist - self.radius * 0.4, 1.0)
+            hyp = math.hypot(length, base_half)
+            tip_pt += QPointF(ux, uy) * (grow * hyp / base_half)
         tail = QPainterPath()
         tail.moveTo(base + QPointF(px * base_half, py * base_half))
-        tail.lineTo(self.tip)
+        tail.lineTo(tip_pt)
         tail.lineTo(base - QPointF(px * base_half, py * base_half))
         tail.closeSubpath()
         return head_path.united(tail)
@@ -692,7 +703,8 @@ class MarkerItem(AnnotationItem):
         return max(2.5, self.radius * 0.16)
 
     def boundingRect(self):
-        m = self._outline_width() * 2 + 6
+        # The outline pin extends ~3.5x the outline width past the sharp tip.
+        m = self._outline_width() * 4.0 + 8
         rect = QRectF(self.head.x() - self.radius, self.head.y() - self.radius,
                       2 * self.radius, 2 * self.radius)
         return rect.united(QRectF(self.tip, self.tip)).adjusted(-m, -m, m, m)
@@ -703,16 +715,15 @@ class MarkerItem(AnnotationItem):
     def paint(self, painter, option, widget=None):
         painter.setRenderHint(painter.RenderHint.Antialiasing, True)
         path = self.marker_path()
-        # Skitch pins always carry the white outline + shadow.
+        # Skitch pins always carry the white outline + shadow. The outline
+        # is a geometrically larger pin painted underneath: exact sharp tip,
+        # no pen-join spikes escaping the bounding rect.
+        outline_path = self.marker_path(grow=self._outline_width())
         painter.setPen(Qt.NoPen)
         painter.setBrush(SHADOW_COLOR)
-        painter.drawPath(path.translated(1.5, 2.0))
-        # Miter join keeps the pointer tip sharp instead of rounding it off.
-        painter.setPen(QPen(OUTLINE_COLOR, self._outline_width() * 2,
-                            Qt.SolidLine, Qt.SquareCap, Qt.MiterJoin))
+        painter.drawPath(outline_path.translated(1.5, 2.0))
         painter.setBrush(OUTLINE_COLOR)
-        painter.drawPath(path)
-        painter.setPen(Qt.NoPen)
+        painter.drawPath(outline_path)
         painter.setBrush(self.color)
         painter.drawPath(path)
 
