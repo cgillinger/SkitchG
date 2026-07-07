@@ -586,7 +586,7 @@ class MarkerItem(AnnotationItem):
         self.editing = False
 
     def default_offset(self):
-        return self.radius * 1.9
+        return self.radius * 1.7
 
     def set_geometry(self, tip=None, head=None):
         self.prepareGeometryChange()
@@ -600,7 +600,7 @@ class MarkerItem(AnnotationItem):
             dist = math.hypot(v.x(), v.y())
             if dist < 1e-3:
                 v, dist = QPointF(0, -1), 1.0
-            clamped = max(self.radius * 1.6, min(self.radius * 2.3, dist))
+            clamped = max(self.radius * 1.45, min(self.radius * 1.95, dist))
             self.head = self.tip + v * (clamped / dist)
         self._layout_handles()
         self.update()
@@ -660,10 +660,10 @@ class MarkerItem(AnnotationItem):
             return head_path
         ux, uy = v.x() / dist, v.y() / dist
         px, py = -uy, ux
-        base_half = r * 0.74
-        # Anchor the pointer base slightly toward the tip so it merges
-        # smoothly with the circle instead of crossing its center.
-        base = self.head + QPointF(ux * r * 0.35, uy * r * 0.35)
+        # A crisp, narrow wedge: base well inside the circle (no bulge where
+        # it emerges) tapering straight to a sharp point.
+        base_half = r * 0.55
+        base = self.head + QPointF(ux * r * 0.4, uy * r * 0.4)
         tail = QPainterPath()
         tail.moveTo(base + QPointF(px * base_half, py * base_half))
         tail.lineTo(self.tip)
@@ -696,8 +696,9 @@ class MarkerItem(AnnotationItem):
         painter.setPen(Qt.NoPen)
         painter.setBrush(SHADOW_COLOR)
         painter.drawPath(path.translated(1.5, 2.0))
+        # Miter join keeps the pointer tip sharp instead of rounding it off.
         painter.setPen(QPen(OUTLINE_COLOR, self._outline_width() * 2,
-                            Qt.SolidLine, Qt.RoundCap, Qt.RoundJoin))
+                            Qt.SolidLine, Qt.SquareCap, Qt.MiterJoin))
         painter.setBrush(OUTLINE_COLOR)
         painter.drawPath(path)
         painter.setPen(Qt.NoPen)
