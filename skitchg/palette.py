@@ -22,7 +22,7 @@ STROKE_SIZES = {
     "XS": 2.5,
     "S": 4.0,
     "M": 6.0,
-    "L": 8.0,
+    "L": 10.0,
 }
 DEFAULT_STROKE = "M"
 
@@ -31,7 +31,7 @@ TEXT_SIZES = {
     "XS": 14,
     "S": 18,
     "M": 23,
-    "L": 28,
+    "L": 34,
 }
 
 # Numbered marker head radius tied to the size choice
@@ -39,7 +39,7 @@ MARKER_RADII = {
     "XS": 11.0,
     "S": 14.0,
     "M": 17.0,
-    "L": 20.0,
+    "L": 24.0,
 }
 
 OUTLINE_COLOR = QColor("#FFFFFF")
