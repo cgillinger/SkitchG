@@ -213,10 +213,10 @@ class MainWindow(QMainWindow):
 
     def set_size(self, size_name):
         self.canvas.current_size_name = size_name
+        self.canvas.size_multiplier = 1.0  # presets reset the wheel adjustment
         for name, btn in self._size_buttons.items():
             btn.setChecked(name == size_name)
-        self.canvas.apply_style_to_selection(
-            stroke_width=STROKE_SIZES[size_name], size_name=size_name)
+        self.canvas.apply_style_to_selection(**self.canvas.effective_style())
 
     def set_outline(self, enabled):
         self.canvas.current_outline = enabled

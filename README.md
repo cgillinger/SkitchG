@@ -13,7 +13,7 @@ Open an image → drag a big pink arrow → `Ctrl+C` → paste. Done.
 [![Qt for Python](https://img.shields.io/badge/GUI-PySide6%20%2F%20Qt6-41cd52?logo=qt&logoColor=white)](https://doc.qt.io/qtforpython-6/)
 [![Platform: Linux](https://img.shields.io/badge/platform-Linux-FCC624?logo=linux&logoColor=black)](#install)
 [![License: MIT](https://img.shields.io/badge/license-MIT-green)](LICENSE)
-[![Version](https://img.shields.io/badge/version-0.2.0-orange)](https://github.com/cgillinger/SkitchG/releases)
+[![Version](https://img.shields.io/badge/version-0.3.0-orange)](https://github.com/cgillinger/SkitchG/releases)
 
 <img src="docs/demo-annotations.png" alt="SkitchG annotations demo — thick pink Skitch-style arrows, outlined text, rectangle, ellipse and pixelate on light and dark backgrounds" width="700">
 
@@ -55,6 +55,10 @@ No accounts. No cloud. No layers. No dialogs you didn't ask for.
 - 💾 Export as PNG or JPEG — saves as `name_annotated.png` by default; the
   **original file is never overwritten** without explicit confirmation
 - 🖼️ Opens PNG, JPG/JPEG, WebP and BMP, respects EXIF rotation
+- 📏 **Always sensibly sized** — default arrow/text/marker sizes scale with
+  the image resolution, so they look right on a 24 MP photo and a small
+  screenshot alike; **scroll the mouse wheel** to resize on the fly, before
+  or after drawing
 - ⚡ Annotations stay vector-based while editing — rasterized only on export
 
 <div align="center">
@@ -102,7 +106,7 @@ on image files.
 | `M` | Numbered marker | | `Delete` | Delete selected |
 | `X` | Pixelate | | `Esc` | Cancel / deselect |
 | `C` | Crop | | `Ctrl+scroll` | Zoom (`Ctrl+0` fit, `Ctrl+1` 100%) |
-| `V` | Select / move | | | |
+| `V` | Select / move | | `Scroll` | Resize annotations on the fly |
 
 ## Usage tips
 
@@ -119,9 +123,12 @@ Double-click a marker to change its label (up to 3 characters, e.g. `12`
 or `A`). Great for step-by-step instructions.
 
 **Colors & sizes** — swatches in the top bar (default: strong pink that
-reads on almost anything). `S`/`M`/`L` set stroke thickness and text size.
-The outline button toggles the white outline + shadow. With a selection,
-these restyle it; otherwise they set the style for new annotations.
+reads on almost anything). `S`/`M`/`L` set stroke thickness and text size,
+scaled to the image resolution so Medium always looks Medium. **Scroll the
+mouse wheel** while a drawing tool is active — or with annotations selected —
+to grow or shrink smoothly, even mid-draw. The outline button toggles the
+white outline + shadow. With a selection, style changes restyle it;
+otherwise they set the style for new annotations.
 
 > **Clipboard note:** on Linux the clipboard is owned by the running app.
 > Keep SkitchG open until you've pasted, or use a clipboard manager.

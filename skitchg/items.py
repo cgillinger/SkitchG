@@ -18,7 +18,7 @@ from PySide6.QtGui import (
 )
 from PySide6.QtWidgets import QGraphicsItem
 
-from .palette import MARKER_RADII, OUTLINE_COLOR, SHADOW_COLOR, TEXT_SIZES
+from .palette import OUTLINE_COLOR, SHADOW_COLOR
 
 
 HANDLE_SIZE = 10.0  # screen pixels (handles ignore zoom)
@@ -80,7 +80,7 @@ class AnnotationItem(QGraphicsItem):
     # ---- style ----
 
     def set_style(self, color=None, stroke_width=None, outline=None,
-                  size_name=None, point_size=None):
+                  point_size=None, radius=None):
         if color is not None:
             self.color = QColor(color)
         if stroke_width is not None:
@@ -474,11 +474,11 @@ class TextItem(AnnotationItem):
     click to place, type, Enter commits, Escape cancels.
     """
 
-    def __init__(self, pos, color, size_name, outline=True):
-        super().__init__(color, TEXT_SIZES.get(size_name, 28), outline)
+    def __init__(self, pos, color, point_size, outline=True):
+        super().__init__(color, point_size, outline)
         self.setPos(pos)
         self.text = ""
-        self.point_size = TEXT_SIZES.get(size_name, 28)
+        self.point_size = float(point_size)
         self.editing = False
 
     def font(self):
@@ -493,13 +493,11 @@ class TextItem(AnnotationItem):
         self.update()
 
     def set_style(self, color=None, stroke_width=None, outline=None,
-                  size_name=None, point_size=None):
-        # The stroke size choice maps to a text point size instead.
-        if size_name is not None:
-            point_size = TEXT_SIZES.get(size_name, self.point_size)
+                  point_size=None, radius=None):
+        # The size choice maps to a text point size instead of stroke width.
         if point_size is not None:
             self.prepareGeometryChange()
-            self.point_size = point_size
+            self.point_size = float(point_size)
         super().set_style(color=color, outline=outline)
 
     def get_style(self):
@@ -578,10 +576,10 @@ class MarkerItem(AnnotationItem):
 
     MAX_CHARS = 3
 
-    def __init__(self, tip, color, size_name, text="1", outline=True):
-        super().__init__(color, MARKER_RADII.get(size_name, 20.0), outline)
+    def __init__(self, tip, color, radius, text="1", outline=True):
+        super().__init__(color, radius, outline)
         self.tip = QPointF(tip)
-        self.radius = MARKER_RADII.get(size_name, 20.0)
+        self.radius = float(radius)
         self.head = QPointF(tip.x(), tip.y() - self.default_offset())
         self.text = text
         self.editing = False
@@ -623,12 +621,10 @@ class MarkerItem(AnnotationItem):
         self.radius = state["radius"]
 
     def set_style(self, color=None, stroke_width=None, outline=None,
-                  size_name=None, radius=None):
-        if size_name is not None:
-            radius = MARKER_RADII.get(size_name, self.radius)
+                  point_size=None, radius=None):
         if radius is not None:
             self.prepareGeometryChange()
-            self.radius = radius
+            self.radius = float(radius)
         AnnotationItem.set_style(self, color=color, outline=outline)
 
     def get_style(self):
