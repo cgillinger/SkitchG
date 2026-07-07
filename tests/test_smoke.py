@@ -115,11 +115,11 @@ def test_smoke():
     import math
     m1.set_geometry(head=QPointF(260, 160))  # far away: clamped to pin band
     d = math.hypot(m1.head.x() - m1.tip.x(), m1.head.y() - m1.tip.y())
-    assert m1.radius * 1.5 <= d <= m1.radius * 2.4
+    assert m1.radius * 1.4 <= d <= m1.radius * 2.0
     assert m1.head.x() > m1.tip.x() and m1.head.y() < m1.tip.y()  # aim kept
     m1.set_geometry(head=QPointF(201, 200))  # too close: pushed out to min
     d = math.hypot(m1.head.x() - m1.tip.x(), m1.head.y() - m1.tip.y())
-    assert d >= m1.radius * 1.5
+    assert d >= m1.radius * 1.4
     m1.set_style(radius=28.0)
     assert m1.radius == 28.0
     state = m1.get_state()
