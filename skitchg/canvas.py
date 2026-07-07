@@ -61,7 +61,8 @@ class Canvas(QGraphicsView):
         self.tool = "arrow"
         self.current_color = QColor(DEFAULT_COLOR)
         self.current_size_name = DEFAULT_STROKE
-        self.current_outline = True
+        # Skitch draws arrows/shapes flat; text and pins are always outlined.
+        self.current_outline = False
         # Sizes are in image pixels, so they scale with the image resolution
         # (a 4px arrow is invisible on a 24MP photo). The multiplier is the
         # on-the-fly adjustment driven by the mouse wheel.

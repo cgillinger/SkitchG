@@ -155,8 +155,10 @@ class MainWindow(QMainWindow):
         self.outline_action = QAction(make_icon("outline", self._icon_color),
                                       "White outline / shadow", self)
         self.outline_action.setCheckable(True)
-        self.outline_action.setChecked(True)
-        self.outline_action.setToolTip("Toggle white outline + shadow for visibility")
+        self.outline_action.setChecked(False)
+        self.outline_action.setToolTip(
+            "White outline + shadow on arrows and shapes "
+            "(text and markers are always outlined)")
         self.outline_action.triggered.connect(self.set_outline)
         bar.addAction(self.outline_action)
 
