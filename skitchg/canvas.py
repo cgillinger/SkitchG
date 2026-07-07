@@ -302,7 +302,9 @@ class Canvas(QGraphicsView):
             return
 
         self.undo_stack.push(AddItemCommand(self, item))
-        item.setSelected(False)
+        # Keep the fresh annotation selected so the wheel resizes it directly.
+        self.scene().clearSelection()
+        item.setSelected(True)
 
     def mouseDoubleClickEvent(self, event):
         if self.tool == "select":
@@ -393,6 +395,9 @@ class Canvas(QGraphicsView):
         elif old_state != item.get_state():
             self.undo_stack.push(
                 GeometryCommand(self, item, old_state, item.get_state(), "Edit text"))
+        # Keep it selected so the wheel resizes it right after typing.
+        self.scene().clearSelection()
+        item.setSelected(True)
 
     def cancel_text_edit(self):
         item = self._editing_text
