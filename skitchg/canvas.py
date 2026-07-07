@@ -53,6 +53,11 @@ class Canvas(QGraphicsView):
         self.setRenderHint(QPainter.SmoothPixmapTransform, True)
         self.setTransformationAnchor(QGraphicsView.AnchorUnderMouse)
         self.setDragMode(QGraphicsView.NoDrag)
+        # Repaint the whole viewport on every change. Partial updates left
+        # ghost residue from cosmetic pens (selection rect, zoom-independent
+        # handles) that straddle the dirty region by a device pixel when the
+        # view is zoomed out — cheap insurance for one image + a few vectors.
+        self.setViewportUpdateMode(QGraphicsView.FullViewportUpdate)
         self.setAcceptDrops(False)  # main window handles drops
 
         self.undo_stack = QUndoStack(self)
