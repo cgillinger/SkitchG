@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src="skitchg.png" alt="SkitchG logo — pink annotation arrow" width="128" height="128">
+<img src="icons/draw.png" alt="SkitchG app icon — pencil" width="128" height="128">
 
 # SkitchG
 
@@ -13,7 +13,7 @@ Open an image → drag a big pink arrow → `Ctrl+C` → paste. Done.
 [![Qt for Python](https://img.shields.io/badge/GUI-PySide6%20%2F%20Qt6-41cd52?logo=qt&logoColor=white)](https://doc.qt.io/qtforpython-6/)
 [![Platform: Linux](https://img.shields.io/badge/platform-Linux-FCC624?logo=linux&logoColor=black)](#install)
 [![License: MIT](https://img.shields.io/badge/license-MIT-green)](LICENSE)
-[![Version](https://img.shields.io/badge/version-0.1.0-orange)](https://github.com/cgillinger/SkitchG/releases)
+[![Version](https://img.shields.io/badge/version-0.2.0-orange)](https://github.com/cgillinger/SkitchG/releases)
 
 <img src="docs/demo-annotations.png" alt="SkitchG annotations demo — thick pink Skitch-style arrows, outlined text, rectangle, ellipse and pixelate on light and dark backgrounds" width="700">
 
@@ -43,6 +43,8 @@ No accounts. No cloud. No layers. No dialogs you didn't ask for.
 
 - 🎯 **Skitch-style arrows** — thick tapered shaft, big filled head, white
   outline + drop shadow, readable on any background
+- 📍 **Numbered markers** — Skitch-style pins with an auto-incrementing
+  number in the head; drag to aim the pointer tail, double-click to relabel
 - 🅰️ **Bold outlined text** — click, type, Enter. Done.
 - ⬜ Rectangle, ellipse, line, freehand pen
 - 🔒 **Pixelate** tool for hiding sensitive information (names, emails, keys)
@@ -56,6 +58,7 @@ No accounts. No cloud. No layers. No dialogs you didn't ask for.
 - ⚡ Annotations stay vector-based while editing — rasterized only on export
 
 <div align="center">
+<img src="docs/markers-demo.png" alt="SkitchG numbered markers — pin-shaped badges with numbers and directional pointer tails" width="700">
 <img src="docs/app-window.png" alt="SkitchG application window on Linux — vertical tool bar, color palette, selected arrow with drag handles" width="700">
 </div>
 
@@ -96,9 +99,10 @@ on image files.
 | `E` | Ellipse | | `Ctrl+C` | Copy image to clipboard |
 | `L` | Line | | `Ctrl+Z` | Undo |
 | `P` | Pen | | `Ctrl+Shift+Z` / `Ctrl+Y` | Redo |
-| `X` | Pixelate | | `Delete` | Delete selected |
-| `C` | Crop | | `Esc` | Cancel / deselect |
-| `V` | Select / move | | `Ctrl+scroll` | Zoom (`Ctrl+0` fit, `Ctrl+1` 100%) |
+| `M` | Numbered marker | | `Delete` | Delete selected |
+| `X` | Pixelate | | `Esc` | Cancel / deselect |
+| `C` | Crop | | `Ctrl+scroll` | Zoom (`Ctrl+0` fit, `Ctrl+1` 100%) |
+| `V` | Select / move | | | |
 
 ## Usage tips
 
@@ -108,6 +112,11 @@ handles to reshape it.
 
 **Text** — click, type. `Enter` commits, `Shift+Enter` adds a line,
 `Esc` cancels. Double-click existing text to edit.
+
+**Numbered markers** — click to drop a pin (numbers count up automatically:
+1, 2, 3…), or click and drag to aim the pointer tail at the exact spot.
+Double-click a marker to change its label (up to 3 characters, e.g. `12`
+or `A`). Great for step-by-step instructions.
 
 **Colors & sizes** — swatches in the top bar (default: strong pink that
 reads on almost anything). `S`/`M`/`L` set stroke thickness and text size.
@@ -143,9 +152,11 @@ image editing. SkitchG is an annotation tool — that focus is the feature.
 - [Marianne](https://github.com/takecy/marianne) — Skitch-style annotator built with Tauri
 - [Flameshot](https://flameshot.org/) / [ksnip](https://github.com/ksnip/ksnip) — screenshot-first tools with annotation
 
-## License
+## License & credits
 
 [MIT](LICENSE) © Christian Gillinger
+
+App icon: <a href="https://www.flaticon.com/free-icons/stationary" title="stationary icons">Stationary icons created by Sergei Kokota - Flaticon</a>
 
 <sub>Keywords: image annotation tool, Skitch alternative Linux, annotate
 screenshots, arrow annotation, markup images, pixelate sensitive data,

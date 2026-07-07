@@ -54,6 +54,21 @@ def make_icon(name, color):
         font.setBold(True)
         p.setFont(font)
         p.drawText(QRectF(0, 0, s, s), Qt.AlignCenter, "A")
+    elif name == "marker":
+        head = QPainterPath()
+        head.addEllipse(QPointF(13, 10), 8, 8)
+        tail = QPainterPath(QPointF(9, 16.5))
+        tail.lineTo(QPointF(11, 23.5))
+        tail.lineTo(QPointF(16, 17.5))
+        tail.closeSubpath()
+        p.setPen(Qt.NoPen)
+        p.setBrush(c)
+        p.drawPath(head.united(tail))
+        font = QFont("Sans Serif", int(s * 0.34))
+        font.setBold(True)
+        p.setFont(font)
+        p.setPen(QColor("#FFFFFF") if c.lightness() < 128 else QColor("#333333"))
+        p.drawText(QRectF(5, 2, 16, 16), Qt.AlignCenter, "1")
     elif name == "pixelate":
         p.setPen(Qt.NoPen)
         for i in range(4):

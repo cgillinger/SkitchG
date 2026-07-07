@@ -39,6 +39,7 @@ TOOLS = [
     ("ellipse", "Ellipse", "E"),
     ("pen", "Pen", "P"),
     ("text", "Text", "T"),
+    ("marker", "Numbered marker", "M"),
     ("pixelate", "Pixelate", "X"),
     ("crop", "Crop", "C"),
 ]

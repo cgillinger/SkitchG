@@ -21,6 +21,7 @@ from skitchg.export import render_annotated  # noqa: E402
 from skitchg.items import (  # noqa: E402
     ArrowItem,
     EllipseItem,
+    MarkerItem,
     PixelateItem,
     RectItem,
     TextItem,
@@ -96,6 +97,26 @@ def test_smoke():
     canvas._editing_text.set_text("nope")
     canvas.cancel_text_edit()
     assert len(canvas.annotation_items()) == 6
+
+    # Numbered markers: auto-increment, aiming, style and edit roundtrip
+    assert canvas._next_marker_number() == 1
+    m1 = MarkerItem(QPointF(200, 200), QColor("#F5286E"), "Medium", text="1")
+    canvas.scene().addItem(m1)
+    stack.push(AddItemCommand(canvas, m1))
+    assert canvas._next_marker_number() == 2
+    m1.set_geometry(head=QPointF(260, 160))
+    assert m1.head == QPointF(260, 160)
+    m1.set_geometry(head=QPointF(201, 200))  # too close: pushed out to min dist
+    assert (m1.head - m1.tip).manhattanLength() >= m1.radius * 1.4
+    m1.set_style(size_name="Large")
+    assert m1.radius == 28.0
+    state = m1.get_state()
+    m1.set_text("12")
+    m1.set_state(state)
+    assert m1.text == "1"
+    stack.undo()
+    assert canvas._next_marker_number() == 1
+    stack.redo()
 
     # Crop with undo/redo
     stack.push(CropCommand(canvas, QRect(50, 50, 500, 400)))
