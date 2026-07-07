@@ -1,42 +1,79 @@
+<div align="center">
+
+<img src="skitchg.png" alt="SkitchG logo — pink annotation arrow" width="128" height="128">
+
 # SkitchG
 
-A fast, minimal, Skitch-inspired image annotation app for Linux.
+**Fast, minimal Skitch-inspired image annotation for Linux.**
 
-Open an image, drag a big pink arrow onto it, hit `Ctrl+C`, paste it in a chat
-or ticket. That's the whole point.
+Open an image → drag a big pink arrow → `Ctrl+C` → paste. Done.
 
-![SkitchG](skitchg.png)
+[![CI](https://github.com/cgillinger/SkitchG/actions/workflows/ci.yml/badge.svg)](https://github.com/cgillinger/SkitchG/actions/workflows/ci.yml)
+[![Python 3.10+](https://img.shields.io/badge/python-3.10%2B-blue?logo=python&logoColor=white)](https://www.python.org/)
+[![Qt for Python](https://img.shields.io/badge/GUI-PySide6%20%2F%20Qt6-41cd52?logo=qt&logoColor=white)](https://doc.qt.io/qtforpython-6/)
+[![Platform: Linux](https://img.shields.io/badge/platform-Linux-FCC624?logo=linux&logoColor=black)](#install)
+[![License: MIT](https://img.shields.io/badge/license-MIT-green)](LICENSE)
+[![Version](https://img.shields.io/badge/version-0.1.0-orange)](https://github.com/cgillinger/SkitchG/releases)
+
+<img src="docs/demo-annotations.png" alt="SkitchG annotations demo — thick pink Skitch-style arrows, outlined text, rectangle, ellipse and pixelate on light and dark backgrounds" width="700">
+
+</div>
+
+---
+
+## Why SkitchG?
+
+[Skitch](https://evernote.com/products/skitch) made visual communication
+effortless: point at things with big, bold arrows instead of writing three
+paragraphs. Evernote discontinued Skitch everywhere except macOS — leaving
+Linux users without a true equivalent.
+
+**SkitchG is a Skitch alternative for Linux** (Linux Mint, Ubuntu, Fedora,
+and any desktop with Qt support). It is *not* a screenshot tool like
+Flameshot or ksnip, and *not* an image editor like GIMP — it is a focused
+**image annotation tool** for existing images, optimized for one flow:
+
+```text
+1. Open image   2. Drag arrow   3. Ctrl+C   4. Paste in chat / ticket / doc
+```
+
+No accounts. No cloud. No layers. No dialogs you didn't ask for.
 
 ## Features
 
-- **Skitch-style arrows** — thick, tapered shaft, big filled head, white
-  outline + drop shadow so they read on any background
-- Text (bold, outlined), rectangle, ellipse, line, freehand pen
-- Pixelate tool for hiding sensitive information
-- Crop
-- Select / move / reshape annotations with handles
-- Full undo/redo
-- Copy the rendered image straight to the clipboard
-- Export as PNG or JPEG — the original file is never touched unless you
-  explicitly confirm overwriting it
-- Opens `.png`, `.jpg`, `.jpeg`, `.webp`, `.bmp` (respects EXIF rotation)
+- 🎯 **Skitch-style arrows** — thick tapered shaft, big filled head, white
+  outline + drop shadow, readable on any background
+- 🅰️ **Bold outlined text** — click, type, Enter. Done.
+- ⬜ Rectangle, ellipse, line, freehand pen
+- 🔒 **Pixelate** tool for hiding sensitive information (names, emails, keys)
+- ✂️ Crop
+- ↕️ Select, move and reshape annotations with drag handles
+- ↩️ Full undo/redo for every action
+- 📋 **Copy the rendered image straight to the clipboard** (`Ctrl+C`)
+- 💾 Export as PNG or JPEG — saves as `name_annotated.png` by default; the
+  **original file is never overwritten** without explicit confirmation
+- 🖼️ Opens PNG, JPG/JPEG, WebP and BMP, respects EXIF rotation
+- ⚡ Annotations stay vector-based while editing — rasterized only on export
 
-Annotations are vector objects while you edit — they are only rasterized when
-you save or copy.
+<div align="center">
+<img src="docs/app-window.png" alt="SkitchG application window on Linux — vertical tool bar, color palette, selected arrow with drag handles" width="700">
+</div>
 
-## Install & run
+## Install
 
-Requires Python 3.10+ and PySide6.
+Requires Python 3.10+ on any Linux desktop.
 
 ```bash
+git clone https://github.com/cgillinger/SkitchG.git
 cd SkitchG
 python3 -m venv .venv
 .venv/bin/pip install -r requirements.txt
+```
 
-# run
-.venv/bin/python app.py [image.jpg]
-# or
-./skitchg-launcher.sh image.jpg
+Run it:
+
+```bash
+./skitchg-launcher.sh image.jpg        # or: .venv/bin/python app.py image.jpg
 ```
 
 ### Desktop integration (optional)
@@ -45,45 +82,40 @@ python3 -m venv .venv
 ./install-desktop.sh
 ```
 
-This installs a `skitchg` command in `~/.local/bin`, a launcher in the
-application menu, and registers SkitchG for "Open with…" on image files.
+Installs the `skitchg` command in `~/.local/bin`, adds SkitchG to the
+application menu, and registers it for **right-click → Open With → SkitchG**
+on image files.
 
-## Usage
+## Keyboard shortcuts
 
-| Key | Action |
-|---|---|
-| `V` | Select / move |
-| `A` | **Arrow** |
-| `L` | Line |
-| `R` | Rectangle |
-| `E` | Ellipse |
-| `P` | Pen |
-| `T` | Text |
-| `X` | Pixelate |
-| `C` | Crop |
-| `Ctrl+O` | Open |
-| `Ctrl+S` | Save (defaults to `name_annotated.png`) |
-| `Ctrl+Shift+S` | Save As |
-| `Ctrl+C` | Copy rendered image to clipboard |
-| `Ctrl+Z` / `Ctrl+Shift+Z` | Undo / Redo |
-| `Delete` | Delete selected annotation |
-| `Esc` | Cancel current action / deselect |
-| `Ctrl+scroll` | Zoom, `Ctrl+0` fit, `Ctrl+1` 100% |
+| Key | Action | | Key | Action |
+|---|---|---|---|---|
+| `A` | **Arrow** | | `Ctrl+O` | Open image |
+| `T` | Text | | `Ctrl+S` | Save (`name_annotated.png`) |
+| `R` | Rectangle | | `Ctrl+Shift+S` | Save As |
+| `E` | Ellipse | | `Ctrl+C` | Copy image to clipboard |
+| `L` | Line | | `Ctrl+Z` | Undo |
+| `P` | Pen | | `Ctrl+Shift+Z` / `Ctrl+Y` | Redo |
+| `X` | Pixelate | | `Delete` | Delete selected |
+| `C` | Crop | | `Esc` | Cancel / deselect |
+| `V` | Select / move | | `Ctrl+scroll` | Zoom (`Ctrl+0` fit, `Ctrl+1` 100%) |
 
-**Arrows:** select the arrow tool, click where the tail starts and drag toward
-the thing you're pointing at. Click an existing arrow (with the select tool)
-to move it, or drag its endpoint handles to reshape it.
+## Usage tips
 
-**Text:** select the text tool, click, type. `Enter` commits, `Shift+Enter`
-makes a new line, `Esc` cancels. Double-click existing text to edit it.
+**Arrows** — click where the tail starts, drag toward what you're pointing
+at, release. Switch to Select (`V`) to move an arrow or drag its endpoint
+handles to reshape it.
 
-**Colors & sizes:** pick from the swatches in the top bar (default: strong
-pink). `S`/`M`/`L` buttons set stroke thickness and text size. The outline
-button toggles the white outline + shadow. With annotations selected, these
-change the selection; otherwise they set the style for new annotations.
+**Text** — click, type. `Enter` commits, `Shift+Enter` adds a line,
+`Esc` cancels. Double-click existing text to edit.
 
-Note: on Linux the clipboard content is owned by the app — keep SkitchG open
-until you've pasted, or run a clipboard manager.
+**Colors & sizes** — swatches in the top bar (default: strong pink that
+reads on almost anything). `S`/`M`/`L` set stroke thickness and text size.
+The outline button toggles the white outline + shadow. With a selection,
+these restyle it; otherwise they set the style for new annotations.
+
+> **Clipboard note:** on Linux the clipboard is owned by the running app.
+> Keep SkitchG open until you've pasted, or use a clipboard manager.
 
 ## Project layout
 
@@ -97,9 +129,24 @@ skitchg/
   export.py             flatten image + annotations for save/copy
   icons.py              programmatically drawn icons
   palette.py            colors, stroke sizes, constants
+tests/test_smoke.py     offscreen end-to-end smoke test (runs in CI)
 ```
 
 ## Non-goals
 
-No cloud, no accounts, no OCR, no layers, no filters, no image editing.
-It's an annotation tool.
+No cloud sync, no accounts, no OCR, no layers, no filters, no AI, no general
+image editing. SkitchG is an annotation tool — that focus is the feature.
+
+## Related projects
+
+- [Skitch](https://evernote.com/products/skitch) — the original (macOS only)
+- [Marianne](https://github.com/takecy/marianne) — Skitch-style annotator built with Tauri
+- [Flameshot](https://flameshot.org/) / [ksnip](https://github.com/ksnip/ksnip) — screenshot-first tools with annotation
+
+## License
+
+[MIT](LICENSE) © Christian Gillinger
+
+<sub>Keywords: image annotation tool, Skitch alternative Linux, annotate
+screenshots, arrow annotation, markup images, pixelate sensitive data,
+PySide6, Qt6, Linux Mint, Ubuntu</sub>
