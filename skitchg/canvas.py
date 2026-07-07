@@ -17,6 +17,7 @@ from .items import (
     ArrowItem,
     EllipseItem,
     LineItem,
+    MarkerItem,
     PenItem,
     PixelateItem,
     RectItem,
@@ -141,11 +142,24 @@ class Canvas(QGraphicsView):
             return
 
         if self.tool == "text":
-            item = self._text_item_at(event.position().toPoint())
+            item = self._editable_item_at(event.position().toPoint())
             if item is not None:
                 self.start_text_edit(item)
             else:
                 self._create_text(pos)
+            return
+
+        if self.tool == "marker":
+            existing = self._editable_item_at(event.position().toPoint())
+            if isinstance(existing, MarkerItem):
+                self.start_text_edit(existing)
+                return
+            self._drag_start = pos
+            self._temp_item = MarkerItem(
+                pos, self.current_color, self.current_size_name,
+                text=str(self._next_marker_number()), outline=self.current_outline)
+            self._temp_item.setZValue(self._next_z())
+            self.scene().addItem(self._temp_item)
             return
 
         self._drag_start = pos
@@ -186,6 +200,8 @@ class Canvas(QGraphicsView):
             item.set_rect(QRectF(self._drag_start, pos))
         elif isinstance(item, PenItem):
             item.add_point(pos)
+        elif isinstance(item, MarkerItem):
+            item.set_geometry(head=pos)
         elif self._crop_overlay is not None:
             self._crop_overlay.setRect(QRectF(self._drag_start, pos).normalized())
 
@@ -219,7 +235,8 @@ class Canvas(QGraphicsView):
         self._drag_start = None
 
         drag_len = (pos - start).manhattanLength() if start is not None else 0
-        big_enough = drag_len >= MIN_DRAG or isinstance(item, PenItem)
+        big_enough = (drag_len >= MIN_DRAG
+                      or isinstance(item, (PenItem, MarkerItem)))
         if not big_enough:
             self.scene().removeItem(item)
             return
@@ -229,7 +246,7 @@ class Canvas(QGraphicsView):
 
     def mouseDoubleClickEvent(self, event):
         if self.tool == "select":
-            item = self._text_item_at(event.position().toPoint())
+            item = self._editable_item_at(event.position().toPoint())
             if item is not None:
                 self.start_text_edit(item)
                 return
@@ -250,6 +267,7 @@ class Canvas(QGraphicsView):
         Qt.Key_E: "ellipse",
         Qt.Key_P: "pen",
         Qt.Key_T: "text",
+        Qt.Key_M: "marker",
         Qt.Key_X: "pixelate",
         Qt.Key_C: "crop",
     }
@@ -327,7 +345,7 @@ class Canvas(QGraphicsView):
         if key == Qt.Key_Escape:
             self.cancel_text_edit()
         elif key in (Qt.Key_Return, Qt.Key_Enter):
-            if event.modifiers() & Qt.ShiftModifier:
+            if event.modifiers() & Qt.ShiftModifier and isinstance(item, TextItem):
                 item.set_text(item.text + "\n")
             else:
                 self.commit_text_edit()
@@ -336,11 +354,16 @@ class Canvas(QGraphicsView):
         elif event.text() and event.text().isprintable():
             item.set_text(item.text + event.text())
 
-    def _text_item_at(self, view_pos):
+    def _editable_item_at(self, view_pos):
         for item in self.items(view_pos):
-            if isinstance(item, TextItem):
+            if isinstance(item, (TextItem, MarkerItem)):
                 return item
         return None
+
+    def _next_marker_number(self):
+        numbers = [int(i.text) for i in self.annotation_items()
+                   if isinstance(i, MarkerItem) and i.text.isdigit()]
+        return max(numbers, default=0) + 1
 
     # ------------------------------------------------------------ edit/select
 

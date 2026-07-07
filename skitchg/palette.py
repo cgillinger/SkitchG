@@ -31,6 +31,13 @@ TEXT_SIZES = {
     "Large": 40,
 }
 
+# Numbered marker head radius tied to stroke size choice
+MARKER_RADII = {
+    "Small": 14.0,
+    "Medium": 20.0,
+    "Large": 28.0,
+}
+
 OUTLINE_COLOR = QColor("#FFFFFF")
 SHADOW_COLOR = QColor(0, 0, 0, 110)
 

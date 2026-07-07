@@ -18,7 +18,7 @@ from PySide6.QtGui import (
 )
 from PySide6.QtWidgets import QGraphicsItem
 
-from .palette import OUTLINE_COLOR, SHADOW_COLOR, TEXT_SIZES
+from .palette import MARKER_RADII, OUTLINE_COLOR, SHADOW_COLOR, TEXT_SIZES
 
 
 HANDLE_SIZE = 10.0  # screen pixels (handles ignore zoom)
@@ -566,6 +566,162 @@ class TextItem(AnnotationItem):
 
     def _outline_width(self):
         return max(2.5, self.point_size / 7.0)
+
+
+class MarkerItem(AnnotationItem):
+    """Skitch-style numbered marker: a round pin head with a pointer tail.
+
+    The tail tip sits on the thing you're pointing at; the head holds an
+    auto-incremented number (editable, double-click). Drag while placing
+    to aim the tail in any direction.
+    """
+
+    MAX_CHARS = 3
+
+    def __init__(self, tip, color, size_name, text="1", outline=True):
+        super().__init__(color, MARKER_RADII.get(size_name, 20.0), outline)
+        self.tip = QPointF(tip)
+        self.radius = MARKER_RADII.get(size_name, 20.0)
+        self.head = QPointF(tip.x(), tip.y() - self.default_offset())
+        self.text = text
+        self.editing = False
+
+    def default_offset(self):
+        return self.radius * 2.1
+
+    def set_geometry(self, tip=None, head=None):
+        self.prepareGeometryChange()
+        if tip is not None:
+            self.tip = QPointF(tip)
+        if head is not None:
+            head = QPointF(head)
+            # Keep the head far enough from the tip for a visible tail.
+            v = head - self.tip
+            dist = math.hypot(v.x(), v.y())
+            min_dist = self.radius * 1.5
+            if dist < min_dist:
+                if dist < 1e-3:
+                    v, dist = QPointF(0, -1), 1.0
+                head = self.tip + v * (min_dist / dist)
+            self.head = head
+        self._layout_handles()
+        self.update()
+
+    def set_text(self, text):
+        self.prepareGeometryChange()
+        self.text = text[: self.MAX_CHARS]
+        self.update()
+
+    def _geometry_state(self):
+        return {"tip": QPointF(self.tip), "head": QPointF(self.head),
+                "text": self.text, "radius": self.radius}
+
+    def _apply_geometry_state(self, state):
+        self.tip = QPointF(state["tip"])
+        self.head = QPointF(state["head"])
+        self.text = state["text"]
+        self.radius = state["radius"]
+
+    def set_style(self, color=None, stroke_width=None, outline=None,
+                  size_name=None, radius=None):
+        if size_name is not None:
+            radius = MARKER_RADII.get(size_name, self.radius)
+        if radius is not None:
+            self.prepareGeometryChange()
+            self.radius = radius
+        AnnotationItem.set_style(self, color=color, outline=outline)
+
+    def get_style(self):
+        return {
+            "color": QColor(self.color),
+            "outline": self.outline,
+            "radius": self.radius,
+        }
+
+    def handle_roles(self):
+        return ["tip", "head"]
+
+    def handle_pos(self, role):
+        return self.tip if role == "tip" else self.head
+
+    def handle_moved(self, role, scene_pos):
+        p = self.mapFromScene(scene_pos)
+        if role == "tip":
+            self.set_geometry(tip=p)
+        else:
+            self.set_geometry(head=p)
+
+    def marker_path(self):
+        """Round head united with a triangular tail ending at the tip."""
+        r = self.radius
+        head_path = QPainterPath()
+        head_path.addEllipse(self.head, r, r)
+
+        v = self.tip - self.head
+        dist = math.hypot(v.x(), v.y())
+        if dist < 1e-3:
+            return head_path
+        ux, uy = v.x() / dist, v.y() / dist
+        px, py = -uy, ux
+        base_half = r * 0.62
+        tail = QPainterPath()
+        tail.moveTo(self.head + QPointF(px * base_half, py * base_half))
+        tail.lineTo(self.tip)
+        tail.lineTo(self.head - QPointF(px * base_half, py * base_half))
+        tail.closeSubpath()
+        return head_path.united(tail)
+
+    def _text_color(self):
+        # Dark digits on light marker colors (white, yellow), white otherwise.
+        c = self.color
+        luminance = 0.299 * c.red() + 0.587 * c.green() + 0.114 * c.blue()
+        return QColor("#1A1A1A") if luminance > 180 else QColor("#FFFFFF")
+
+    def _outline_width(self):
+        return max(2.5, self.radius * 0.16)
+
+    def boundingRect(self):
+        m = self._outline_width() * 2 + 6
+        rect = QRectF(self.head.x() - self.radius, self.head.y() - self.radius,
+                      2 * self.radius, 2 * self.radius)
+        return rect.united(QRectF(self.tip, self.tip)).adjusted(-m, -m, m, m)
+
+    def shape(self):
+        return self.marker_path()
+
+    def paint(self, painter, option, widget=None):
+        painter.setRenderHint(painter.RenderHint.Antialiasing, True)
+        path = self.marker_path()
+        if self.outline:
+            painter.setPen(Qt.NoPen)
+            painter.setBrush(SHADOW_COLOR)
+            painter.drawPath(path.translated(1.5, 2.0))
+            painter.setPen(QPen(OUTLINE_COLOR, self._outline_width() * 2,
+                                Qt.SolidLine, Qt.RoundCap, Qt.RoundJoin))
+            painter.setBrush(OUTLINE_COLOR)
+            painter.drawPath(path)
+        painter.setPen(Qt.NoPen)
+        painter.setBrush(self.color)
+        painter.drawPath(path)
+
+        # The number, centered in the head, shrunk to fit longer labels.
+        display = self.text + ("‸" if self.editing else "")
+        font = QFont("Sans Serif")
+        font.setBold(True)
+        font.setPixelSize(max(8, int(self.radius * (1.15 if len(display) <= 1 else
+                                                    0.95 if len(display) == 2 else 0.72))))
+        painter.setFont(font)
+        painter.setPen(self._text_color())
+        head_rect = QRectF(self.head.x() - self.radius, self.head.y() - self.radius,
+                           2 * self.radius, 2 * self.radius)
+        painter.drawText(head_rect, Qt.AlignCenter, display)
+
+        if self.editing:
+            painter.setPen(QPen(QColor(30, 144, 255, 220), 0, Qt.DashLine))
+            painter.setBrush(Qt.NoBrush)
+            painter.drawRect(self.boundingRect())
+        else:
+            self.paint_selection(painter)
 
 
 class PixelateItem(_RectBasedItem):

@@ -5,17 +5,23 @@ Usage:
     skitchg [image.jpg]
 """
 
+import os
 import sys
 
+from PySide6.QtGui import QIcon
 from PySide6.QtWidgets import QApplication
 
 from skitchg.main_window import MainWindow
+
+ICON_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                         "icons", "draw.png")
 
 
 def main():
     app = QApplication(sys.argv)
     app.setApplicationName("SkitchG")
     app.setOrganizationName("SkitchG")
+    app.setWindowIcon(QIcon(ICON_PATH))
 
     window = MainWindow()
     window.show()
