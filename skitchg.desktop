@@ -1,0 +1,10 @@
+[Desktop Entry]
+Type=Application
+Name=SkitchG
+Comment=Fast Skitch-style image annotation
+Exec=skitchg %f
+Icon=skitchg
+Terminal=false
+Categories=Graphics;2DGraphics;RasterGraphics;
+MimeType=image/png;image/jpeg;image/webp;image/bmp;
+StartupNotify=true
