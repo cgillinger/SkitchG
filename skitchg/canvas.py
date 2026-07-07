@@ -41,6 +41,7 @@ MIN_DRAG = 6.0  # px before a drag counts as a shape
 class Canvas(QGraphicsView):
     dirty_changed = Signal()
     tool_changed = Signal(str)
+    size_adjusted = Signal()  # wheel changed the size away from the preset
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -158,10 +159,13 @@ class Canvas(QGraphicsView):
         style, the item being drawn/edited, and any selected annotations —
         each relative to its own current size."""
         factor = 1.12 if direction > 0 else 1 / 1.12
-        new_multiplier = max(0.3, min(5.0, self.size_multiplier * factor))
+        # Tight clamp: a runaway multiplier made every new shape enormous
+        # while the S/M/L buttons still looked active.
+        new_multiplier = max(0.5, min(2.5, self.size_multiplier * factor))
         if new_multiplier == self.size_multiplier:
             return
         self.size_multiplier = new_multiplier
+        self.size_adjusted.emit()
 
         for item in (self._temp_item, self._editing_text):
             if item is not None:
@@ -176,7 +180,7 @@ class Canvas(QGraphicsView):
         if hasattr(window, "statusBar"):
             window.statusBar().showMessage(
                 f"Size: {self.stroke_width():.0f} px stroke — scroll to adjust, "
-                f"S/M/L to reset", 2500)
+                f"XS/S/M/L to reset", 2500)
 
     @staticmethod
     def _scaled_sizes(item, factor):

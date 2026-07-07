@@ -16,26 +16,30 @@ PALETTE = [
     ("Black", QColor("#1A1A1A")),
 ]
 
-# Stroke widths (px in image coordinates)
+# Stroke widths (px in image coordinates, scaled by image resolution).
+# The scale tops out where the old "Medium" was — that proved big enough.
 STROKE_SIZES = {
-    "Small": 4.0,
-    "Medium": 8.0,
-    "Large": 14.0,
+    "XS": 2.5,
+    "S": 4.0,
+    "M": 6.0,
+    "L": 8.0,
 }
-DEFAULT_STROKE = "Medium"
+DEFAULT_STROKE = "M"
 
-# Text point sizes tied to stroke size choice
+# Text point sizes tied to the size choice
 TEXT_SIZES = {
-    "Small": 20,
-    "Medium": 28,
-    "Large": 40,
+    "XS": 14,
+    "S": 18,
+    "M": 23,
+    "L": 28,
 }
 
-# Numbered marker head radius tied to stroke size choice
+# Numbered marker head radius tied to the size choice
 MARKER_RADII = {
-    "Small": 14.0,
-    "Medium": 20.0,
-    "Large": 28.0,
+    "XS": 11.0,
+    "S": 14.0,
+    "M": 17.0,
+    "L": 20.0,
 }
 
 OUTLINE_COLOR = QColor("#FFFFFF")
