@@ -19,6 +19,7 @@ from .items import (
     ArrowItem,
     EllipseItem,
     HandleItem,
+    HighlightItem,
     LineItem,
     MarkerItem,
     PenItem,
@@ -83,6 +84,7 @@ class Canvas(QGraphicsView):
         self._edit_old_state = None  # state before re-editing existing text
         self._move_snapshot = []     # (item, pos) at mouse press in select mode
         self._handle_drag = False    # a reshape handle grabbed the mouse
+        self._body_drag = False      # an annotation body grabbed the mouse
         self._auto_fit = True        # refit on resize until the user zooms manually
 
     # ------------------------------------------------------------------ image
@@ -229,11 +231,23 @@ class Canvas(QGraphicsView):
                 self._create_text(pos)
             return
 
-        if self.tool == "marker":
-            existing = self._editable_item_at(event.position().toPoint())
-            if isinstance(existing, MarkerItem):
-                self.start_text_edit(existing)
+        # Skitch feel: clicking an existing annotation moves it, whatever
+        # drawing tool is active — you only draw on empty areas. (Text and
+        # crop keep their own semantics.)
+        if self.tool not in ("text", "crop"):
+            body = next((i for i in self.items(event.position().toPoint())
+                         if isinstance(i, AnnotationItem)), None)
+            if body is not None:
+                if self.tool == "marker" and isinstance(body, MarkerItem):
+                    self.start_text_edit(body)
+                    return
+                self._body_drag = True
+                self._move_snapshot = [(i, QPointF(i.pos()))
+                                       for i in self.annotation_items()]
+                super().mousePressEvent(event)
                 return
+
+        if self.tool == "marker":
             self._drag_start = pos
             self._temp_item = MarkerItem(
                 pos, self.current_color, self.marker_radius(),
@@ -254,6 +268,8 @@ class Canvas(QGraphicsView):
             self._temp_item = EllipseItem(QRectF(pos, pos), self.current_color, w, self.current_outline)
         elif self.tool == "pen":
             self._temp_item = PenItem([pos], self.current_color, w, self.current_outline)
+        elif self.tool == "highlight":
+            self._temp_item = HighlightItem([pos], self.current_color, w, False)
         elif self.tool == "pixelate":
             self._temp_item = PixelateItem(QRectF(pos, pos), self.base_image, self.current_color, w)
         elif self.tool == "crop":
@@ -293,6 +309,12 @@ class Canvas(QGraphicsView):
         if self._handle_drag:
             self._handle_drag = False
             super().mouseReleaseEvent(event)
+            return
+
+        if self._body_drag:
+            self._body_drag = False
+            super().mouseReleaseEvent(event)
+            self._push_moves()
             return
 
         if self.tool == "select":
@@ -360,6 +382,7 @@ class Canvas(QGraphicsView):
         Qt.Key_R: "rect",
         Qt.Key_E: "ellipse",
         Qt.Key_P: "pen",
+        Qt.Key_H: "highlight",
         Qt.Key_T: "text",
         Qt.Key_M: "marker",
         Qt.Key_X: "pixelate",

@@ -49,6 +49,13 @@ def make_icon(name, color):
         path = QPainterPath(QPointF(4, 21))
         path.cubicTo(QPointF(9, 10), QPointF(13, 22), QPointF(22, 6))
         p.drawPath(path)
+    elif name == "highlight":
+        translucent = QColor(c)
+        translucent.setAlpha(90)
+        p.setPen(QPen(translucent, 9, Qt.SolidLine, Qt.FlatCap))
+        p.drawLine(7, 19, 19, 7)
+        p.setPen(QPen(c, 2.4, Qt.SolidLine, Qt.RoundCap))
+        p.drawLine(4, 22, 9, 22)
     elif name == "text":
         font = QFont("Sans Serif", int(s * 0.62))
         font.setBold(True)
