@@ -18,6 +18,7 @@ from .items import (
     AnnotationItem,
     ArrowItem,
     EllipseItem,
+    HandleItem,
     LineItem,
     MarkerItem,
     PenItem,
@@ -75,6 +76,7 @@ class Canvas(QGraphicsView):
         self._editing_text = None    # TextItem in edit mode
         self._edit_old_state = None  # state before re-editing existing text
         self._move_snapshot = []     # (item, pos) at mouse press in select mode
+        self._handle_drag = False    # a reshape handle grabbed the mouse
         self._auto_fit = True        # refit on resize until the user zooms manually
 
     # ------------------------------------------------------------------ image
@@ -197,6 +199,14 @@ class Canvas(QGraphicsView):
             else:
                 return
 
+        # Reshape handles on a selected annotation always win over drawing a
+        # new item, no matter which tool is active.
+        if any(isinstance(i, HandleItem) and i.isVisible()
+               for i in self.items(event.position().toPoint())):
+            self._handle_drag = True
+            super().mousePressEvent(event)
+            return
+
         if self.tool == "select":
             self._move_snapshot = [(i, QPointF(i.pos())) for i in self.annotation_items()]
             super().mousePressEvent(event)
@@ -268,6 +278,11 @@ class Canvas(QGraphicsView):
 
     def mouseReleaseEvent(self, event):
         if event.button() != Qt.LeftButton:
+            super().mouseReleaseEvent(event)
+            return
+
+        if self._handle_drag:
+            self._handle_drag = False
             super().mouseReleaseEvent(event)
             return
 
