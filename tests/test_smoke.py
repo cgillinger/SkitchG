@@ -88,8 +88,16 @@ def test_smoke():
     # Text edit flow: commit, discard-empty, cancel
     canvas._create_text(QPointF(50, 50))
     canvas._editing_text.set_text("typed")
+    committed = canvas._editing_text
     canvas.commit_text_edit()
     assert len(canvas.annotation_items()) == 6
+    # Fresh text stays selected → wheel resizes it right after typing
+    assert committed.isSelected()
+    size_before = committed.point_size
+    canvas.adjust_size(+120)
+    assert committed.point_size > size_before
+    canvas.undo_stack.undo()
+    assert committed.point_size == size_before
     canvas._create_text(QPointF(60, 60))
     canvas.commit_text_edit()
     assert len(canvas.annotation_items()) == 6
