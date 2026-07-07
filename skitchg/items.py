@@ -221,10 +221,12 @@ class ArrowItem(AnnotationItem):
         ux, uy = dx / length, dy / length
         px, py = -uy, ux  # perpendicular
 
+        # Skitch proportions: the tail starts almost at a point and the
+        # shaft widens continuously toward a compact triangular head.
         w = self.stroke_width
-        head_len = min(max(w * 3.4, 16.0), length * 0.55)
-        head_half = head_len * 0.52
-        tail_half = max(w * 0.42, 1.2)
+        head_len = min(max(w * 3.8, 14.0), length * 0.5)
+        head_half = w * 1.35
+        tail_half = max(w * 0.10, 0.8)
         neck_half = max(w * 0.72, 2.0)
 
         bx, by = e.x() - ux * head_len, e.y() - uy * head_len  # head base
@@ -395,8 +397,7 @@ class _RectBasedItem(AnnotationItem):
 class RectItem(_RectBasedItem):
     def _shape_path(self):
         path = QPainterPath()
-        radius = min(4.0, self.rect.width() / 4, self.rect.height() / 4)
-        path.addRoundedRect(self.rect, radius, radius)
+        path.addRect(self.rect)  # Skitch rectangles have sharp corners
         return path
 
 
@@ -547,12 +548,12 @@ class TextItem(AnnotationItem):
         painter.setRenderHint(painter.RenderHint.Antialiasing, True)
         path = self.text_path()
         outline_w = max(2.5, self.point_size / 7.0)
-        if self.outline:
-            painter.setPen(Qt.NoPen)
-            painter.setBrush(SHADOW_COLOR)
-            painter.drawPath(path.translated(1.5, 2.0))
-            painter.strokePath(path, QPen(OUTLINE_COLOR, outline_w * 2,
-                                          Qt.SolidLine, Qt.RoundCap, Qt.RoundJoin))
+        # Skitch text always carries the white outline for readability.
+        painter.setPen(Qt.NoPen)
+        painter.setBrush(SHADOW_COLOR)
+        painter.drawPath(path.translated(1.5, 2.0))
+        painter.strokePath(path, QPen(OUTLINE_COLOR, outline_w * 2,
+                                      Qt.SolidLine, Qt.RoundCap, Qt.RoundJoin))
         painter.fillPath(path, self.color)
         if self.editing:
             pen = QPen(QColor(30, 144, 255, 220), 0, Qt.DashLine)
@@ -585,7 +586,7 @@ class MarkerItem(AnnotationItem):
         self.editing = False
 
     def default_offset(self):
-        return self.radius * 2.1
+        return self.radius * 1.9
 
     def set_geometry(self, tip=None, head=None):
         self.prepareGeometryChange()
@@ -593,15 +594,14 @@ class MarkerItem(AnnotationItem):
             self.tip = QPointF(tip)
         if head is not None:
             head = QPointF(head)
-            # Keep the head far enough from the tip for a visible tail.
+            # Skitch pins are compact: dragging mostly aims the stubby tail,
+            # so the head stays within a narrow distance band from the tip.
             v = head - self.tip
             dist = math.hypot(v.x(), v.y())
-            min_dist = self.radius * 1.5
-            if dist < min_dist:
-                if dist < 1e-3:
-                    v, dist = QPointF(0, -1), 1.0
-                head = self.tip + v * (min_dist / dist)
-            self.head = head
+            if dist < 1e-3:
+                v, dist = QPointF(0, -1), 1.0
+            clamped = max(self.radius * 1.6, min(self.radius * 2.3, dist))
+            self.head = self.tip + v * (clamped / dist)
         self._layout_handles()
         self.update()
 
@@ -648,7 +648,8 @@ class MarkerItem(AnnotationItem):
             self.set_geometry(head=p)
 
     def marker_path(self):
-        """Round head united with a triangular tail ending at the tip."""
+        """Map-pin shape: round head with a short, wide integrated pointer,
+        like the classic Skitch stamps."""
         r = self.radius
         head_path = QPainterPath()
         head_path.addEllipse(self.head, r, r)
@@ -659,11 +660,14 @@ class MarkerItem(AnnotationItem):
             return head_path
         ux, uy = v.x() / dist, v.y() / dist
         px, py = -uy, ux
-        base_half = r * 0.62
+        base_half = r * 0.74
+        # Anchor the pointer base slightly toward the tip so it merges
+        # smoothly with the circle instead of crossing its center.
+        base = self.head + QPointF(ux * r * 0.35, uy * r * 0.35)
         tail = QPainterPath()
-        tail.moveTo(self.head + QPointF(px * base_half, py * base_half))
+        tail.moveTo(base + QPointF(px * base_half, py * base_half))
         tail.lineTo(self.tip)
-        tail.lineTo(self.head - QPointF(px * base_half, py * base_half))
+        tail.lineTo(base - QPointF(px * base_half, py * base_half))
         tail.closeSubpath()
         return head_path.united(tail)
 
@@ -688,14 +692,14 @@ class MarkerItem(AnnotationItem):
     def paint(self, painter, option, widget=None):
         painter.setRenderHint(painter.RenderHint.Antialiasing, True)
         path = self.marker_path()
-        if self.outline:
-            painter.setPen(Qt.NoPen)
-            painter.setBrush(SHADOW_COLOR)
-            painter.drawPath(path.translated(1.5, 2.0))
-            painter.setPen(QPen(OUTLINE_COLOR, self._outline_width() * 2,
-                                Qt.SolidLine, Qt.RoundCap, Qt.RoundJoin))
-            painter.setBrush(OUTLINE_COLOR)
-            painter.drawPath(path)
+        # Skitch pins always carry the white outline + shadow.
+        painter.setPen(Qt.NoPen)
+        painter.setBrush(SHADOW_COLOR)
+        painter.drawPath(path.translated(1.5, 2.0))
+        painter.setPen(QPen(OUTLINE_COLOR, self._outline_width() * 2,
+                            Qt.SolidLine, Qt.RoundCap, Qt.RoundJoin))
+        painter.setBrush(OUTLINE_COLOR)
+        painter.drawPath(path)
         painter.setPen(Qt.NoPen)
         painter.setBrush(self.color)
         painter.drawPath(path)
