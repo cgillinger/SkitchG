@@ -41,8 +41,9 @@ No accounts. No cloud. No layers. No dialogs you didn't ask for.
 
 ## Features
 
-- 🎯 **Skitch-style arrows** — thick tapered shaft, big filled head, white
-  outline + drop shadow, readable on any background
+- 🎯 **Skitch-style arrows** — pointed tail widening into a compact filled
+  head, flat strong color just like the original (optional white outline +
+  shadow for busy backgrounds)
 - 📍 **Numbered markers** — Skitch-style pins with an auto-incrementing
   number in the head; drag to aim the pointer tail, double-click to relabel
 - 🅰️ **Bold outlined text** — click, type, Enter. Done.
