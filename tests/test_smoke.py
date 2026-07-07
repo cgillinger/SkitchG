@@ -176,6 +176,35 @@ def test_smoke():
     c2.undo_stack.undo()
     assert a2.stroke_width == before
 
+    # Handle drag must win over drawing tools (regression: grabbing a handle
+    # with the arrow tool active used to create a new arrow instead).
+    from PySide6.QtCore import QPoint, Qt as _Qt
+    from PySide6.QtTest import QTest
+    win3 = MainWindow()
+    win3.resize(900, 700)
+    win3.show()
+    img3 = QImage(800, 600, QImage.Format_ARGB32_Premultiplied)
+    img3.fill(QColor("#FFFFFF"))
+    p3 = os.path.join(workdir, "plain.png")
+    assert img3.save(p3)
+    assert win3.load_file(p3, confirm=False)
+    c3 = win3.canvas
+    a3 = ArrowItem(QPointF(200, 200), QPointF(500, 400), QColor("#F5286E"), 10.0, False)
+    c3.scene().addItem(a3)
+    c3.undo_stack.push(AddItemCommand(c3, a3))
+    c3.set_tool("arrow")
+    a3.setSelected(True)  # handles appear
+    app.processEvents()
+    n_items = len(c3.annotation_items())
+    end_view = c3.mapFromScene(QPointF(500, 400))
+    target = c3.mapFromScene(QPointF(560, 300))
+    QTest.mousePress(c3.viewport(), _Qt.LeftButton, _Qt.NoModifier, end_view)
+    QTest.mouseMove(c3.viewport(), QPoint(target.x(), target.y()))
+    QTest.mouseRelease(c3.viewport(), _Qt.LeftButton, _Qt.NoModifier, target)
+    app.processEvents()
+    assert len(c3.annotation_items()) == n_items, "handle drag created a new item"
+    assert (a3.end - QPointF(560, 300)).manhattanLength() < 20, "handle did not move endpoint"
+
     # Save default path + clipboard
     assert win._default_save_path().endswith("test_input_annotated.png")
     win._write_image(win._default_save_path())
