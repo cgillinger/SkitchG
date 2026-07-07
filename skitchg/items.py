@@ -640,14 +640,23 @@ class MarkerItem(AnnotationItem):
         return ["tip", "head"]
 
     def handle_pos(self, role):
-        return self.tip if role == "tip" else self.head
+        if role == "tip":
+            return self.tip
+        # The aim knob sits on the far rim of the head, never covering the
+        # number in the middle.
+        v = self.head - self.tip
+        dist = math.hypot(v.x(), v.y())
+        if dist < 1e-3:
+            return self.head + QPointF(0, -self.radius)
+        return self.head + v * (self.radius / dist)
 
     def handle_moved(self, role, scene_pos):
         p = self.mapFromScene(scene_pos)
         if role == "tip":
-            self.set_geometry(tip=p)
+            self.set_geometry(tip=p)  # moves the whole pin
         else:
-            self.set_geometry(head=p)
+            # Aim the pointer: the head orbits the tip toward the mouse.
+            self.set_geometry(head=self.tip + (p - self.tip))
 
     def marker_path(self):
         """Map-pin shape: round head with a short, wide integrated pointer,
