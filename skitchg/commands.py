@@ -82,20 +82,38 @@ class GeometryCommand(QUndoCommand):
 
 
 class StyleCommand(QUndoCommand):
-    def __init__(self, canvas, items, new_style):
-        """new_style: dict with any of color / stroke_width / outline."""
+    MERGE_ID = 1001
+
+    def __init__(self, canvas, pairs, mergeable=False):
+        """pairs: list of (item, new_style) where new_style holds any of
+        color / stroke_width / point_size / radius / outline. Mergeable
+        commands (mouse-wheel resize) collapse consecutive steps into one
+        undo entry."""
         super().__init__("Change style")
         self.canvas = canvas
-        self.entries = [(item, item.get_style()) for item in items]
-        self.new_style = new_style
+        self.entries = [(item, item.get_style(), dict(style))
+                        for item, style in pairs]
+        self.mergeable = mergeable
+
+    def id(self):
+        return self.MERGE_ID if self.mergeable else -1
+
+    def mergeWith(self, other):
+        if not (isinstance(other, StyleCommand) and other.mergeable):
+            return False
+        if [e[0] for e in self.entries] != [e[0] for e in other.entries]:
+            return False
+        for mine, theirs in zip(self.entries, other.entries):
+            mine[2].update(theirs[2])
+        return True
 
     def redo(self):
-        for item, _old in self.entries:
-            item.set_style(**self.new_style)
+        for item, _old, new in self.entries:
+            item.set_style(**new)
         self.canvas.mark_dirty()
 
     def undo(self):
-        for item, old in self.entries:
+        for item, old, _new in self.entries:
             item.set_style(**old)
         self.canvas.mark_dirty()
 

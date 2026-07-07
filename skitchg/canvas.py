@@ -1,5 +1,7 @@
 """The annotation canvas: a QGraphicsView with the image and tool handling."""
 
+import math
+
 from PySide6.QtCore import QPointF, QRectF, Qt, Signal
 from PySide6.QtGui import QColor, QImage, QPainter, QPen, QPixmap, QUndoStack
 from PySide6.QtWidgets import QGraphicsPixmapItem, QGraphicsRectItem, QGraphicsScene, QGraphicsView
@@ -23,7 +25,14 @@ from .items import (
     RectItem,
     TextItem,
 )
-from .palette import CANVAS_BG, DEFAULT_COLOR, DEFAULT_STROKE, STROKE_SIZES
+from .palette import (
+    CANVAS_BG,
+    DEFAULT_COLOR,
+    DEFAULT_STROKE,
+    MARKER_RADII,
+    STROKE_SIZES,
+    TEXT_SIZES,
+)
 
 MIN_DRAG = 6.0  # px before a drag counts as a shape
 
@@ -53,6 +62,11 @@ class Canvas(QGraphicsView):
         self.current_color = QColor(DEFAULT_COLOR)
         self.current_size_name = DEFAULT_STROKE
         self.current_outline = True
+        # Sizes are in image pixels, so they scale with the image resolution
+        # (a 4px arrow is invisible on a 24MP photo). The multiplier is the
+        # on-the-fly adjustment driven by the mouse wheel.
+        self.image_scale = 1.0
+        self.size_multiplier = 1.0
 
         self._temp_item = None       # item being drawn right now
         self._drag_start = None
@@ -72,6 +86,8 @@ class Canvas(QGraphicsView):
         self.scene().addItem(self._pixmap_item)
         self._image = image
         self.scene().setSceneRect(QRectF(image.rect()))
+        self.image_scale = max(1.0, math.hypot(image.width(), image.height()) / 1200.0)
+        self.size_multiplier = 1.0
         self.undo_stack.clear()
         self._temp_item = None
         self._editing_text = None
@@ -113,12 +129,56 @@ class Canvas(QGraphicsView):
         self.tool_changed.emit(tool)
 
     def stroke_width(self):
-        return STROKE_SIZES[self.current_size_name]
+        return STROKE_SIZES[self.current_size_name] * self.image_scale * self.size_multiplier
+
+    def text_point_size(self):
+        return TEXT_SIZES[self.current_size_name] * self.image_scale * self.size_multiplier
+
+    def marker_radius(self):
+        return MARKER_RADII[self.current_size_name] * self.image_scale * self.size_multiplier
+
+    def effective_style(self):
+        """The three size values, scaled to the current image and multiplier."""
+        return {
+            "stroke_width": self.stroke_width(),
+            "point_size": self.text_point_size(),
+            "radius": self.marker_radius(),
+        }
 
     def apply_style_to_selection(self, **style):
         items = [i for i in self.scene().selectedItems() if isinstance(i, AnnotationItem)]
         if items:
-            self.undo_stack.push(StyleCommand(self, items, style))
+            self.undo_stack.push(StyleCommand(self, [(i, style) for i in items]))
+
+    def adjust_size(self, direction):
+        """Skitch-style on-the-fly resize (mouse wheel): scales the pending
+        style, the item being drawn/edited, and any selected annotations —
+        each relative to its own current size."""
+        factor = 1.12 if direction > 0 else 1 / 1.12
+        new_multiplier = max(0.3, min(5.0, self.size_multiplier * factor))
+        if new_multiplier == self.size_multiplier:
+            return
+        self.size_multiplier = new_multiplier
+
+        for item in (self._temp_item, self._editing_text):
+            if item is not None:
+                item.set_style(**self._scaled_sizes(item, factor))
+        pairs = [(i, self._scaled_sizes(i, factor))
+                 for i in self.scene().selectedItems()
+                 if isinstance(i, AnnotationItem)]
+        if pairs:
+            self.undo_stack.push(StyleCommand(self, pairs, mergeable=True))
+
+        window = self.window()
+        if hasattr(window, "statusBar"):
+            window.statusBar().showMessage(
+                f"Size: {self.stroke_width():.0f} px stroke — scroll to adjust, "
+                f"S/M/L to reset", 2500)
+
+    @staticmethod
+    def _scaled_sizes(item, factor):
+        return {key: value * factor for key, value in item.get_style().items()
+                if key in ("stroke_width", "point_size", "radius")}
 
     # ------------------------------------------------------------- mouse/keys
 
@@ -156,7 +216,7 @@ class Canvas(QGraphicsView):
                 return
             self._drag_start = pos
             self._temp_item = MarkerItem(
-                pos, self.current_color, self.current_size_name,
+                pos, self.current_color, self.marker_radius(),
                 text=str(self._next_marker_number()), outline=self.current_outline)
             self._temp_item.setZValue(self._next_z())
             self.scene().addItem(self._temp_item)
@@ -256,8 +316,15 @@ class Canvas(QGraphicsView):
         if event.modifiers() & Qt.ControlModifier:
             factor = 1.2 if event.angleDelta().y() > 0 else 1 / 1.2
             self.zoom_by(factor)
-        else:
-            super().wheelEvent(event)
+            return
+        # Skitch-style on-the-fly resize: plain scroll adjusts annotation
+        # size whenever a drawing tool is active or something is selected.
+        has_selection = bool(self.scene() and self.scene().selectedItems())
+        if self.has_image() and (self.tool not in ("select", "crop") or has_selection
+                                 or self._temp_item is not None):
+            self.adjust_size(event.angleDelta().y())
+            return
+        super().wheelEvent(event)
 
     TOOL_KEYS = {
         Qt.Key_V: "select",
@@ -290,7 +357,7 @@ class Canvas(QGraphicsView):
     # ------------------------------------------------------------------- text
 
     def _create_text(self, pos):
-        item = TextItem(pos, self.current_color, self.current_size_name, self.current_outline)
+        item = TextItem(pos, self.current_color, self.text_point_size(), self.current_outline)
         item.setZValue(self._next_z())
         self.scene().addItem(item)
         self.start_text_edit(item, is_new=True)
