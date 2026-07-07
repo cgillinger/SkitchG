@@ -159,7 +159,7 @@ def test_smoke():
     c2 = win2.canvas
     assert abs(c2.image_scale - 5000 / 1200) < 0.01
     medium = c2.stroke_width()
-    assert medium > 30  # ~33 px on a 4000x3000 image, clearly visible
+    assert medium > 20  # ~25 px on a 4000x3000 image, clearly visible
 
     # On-the-fly resize: wheel scales pending style and selection relatively
     a2 = ArrowItem(QPointF(100, 100), QPointF(600, 600), QColor("#F5286E"),

@@ -55,6 +55,7 @@ class MainWindow(QMainWindow):
         self.setCentralWidget(self.canvas)
         self.canvas.dirty_changed.connect(self._update_title)
         self.canvas.tool_changed.connect(self._sync_tool_buttons)
+        self.canvas.size_adjusted.connect(self._sync_size_buttons)
         self.canvas.undo_stack.cleanChanged.connect(self._update_title)
 
         self.source_path = None   # the opened original file
@@ -141,8 +142,8 @@ class MainWindow(QMainWindow):
         self._size_buttons = {}
         for size_name in STROKE_SIZES:
             btn = QToolButton(self)
-            btn.setText(size_name[0])
-            btn.setToolTip(f"{size_name} stroke")
+            btn.setText(size_name)
+            btn.setToolTip(f"{size_name} size")
             btn.setAutoRaise(True)
             btn.setCheckable(True)
             btn.clicked.connect(lambda checked, n=size_name: self.set_size(n))
@@ -228,6 +229,13 @@ class MainWindow(QMainWindow):
         action = self._tool_actions.get(tool)
         if action is not None and not action.isChecked():
             action.setChecked(True)
+
+    def _sync_size_buttons(self):
+        # Wheel-adjusted size: no preset is active, so uncheck S/M/L to make
+        # the custom state visible. Pressing one of them resets to a preset.
+        at_preset = self.canvas.size_multiplier == 1.0
+        for name, btn in self._size_buttons.items():
+            btn.setChecked(at_preset and name == self.canvas.current_size_name)
 
     # ------------------------------------------------------------- open/save
 
