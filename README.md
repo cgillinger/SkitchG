@@ -56,7 +56,9 @@ No accounts. No cloud. No layers. No dialogs you didn't ask for.
 - ✂️ Crop
 - ↕️ Select, move and reshape annotations with drag handles
 - ↩️ Full undo/redo for every action
-- 📋 **Copy the rendered image straight to the clipboard** (`Ctrl+C`)
+- 📋 **Copy the rendered image straight to the clipboard** (`Ctrl+C`) — and
+  **paste an image from the clipboard** (`Ctrl+V`) to annotate it, e.g.
+  straight from your screenshot tool
 - 💾 Export as PNG or JPEG — saves as `name_annotated.png` by default; the
   **original file is never overwritten** without explicit confirmation
 - 🖼️ Opens PNG, JPG/JPEG, WebP and BMP, respects EXIF rotation
@@ -106,13 +108,13 @@ on image files.
 | `T` | Text | | `Ctrl+S` | Save (`name_annotated.png`) |
 | `R` | Rectangle | | `Ctrl+Shift+S` | Save As |
 | `E` | Ellipse | | `Ctrl+C` | Copy image to clipboard |
-| `L` | Line | | `Ctrl+Z` | Undo |
-| `P` | Pen | | `Ctrl+Shift+Z` / `Ctrl+Y` | Redo |
-| `M` | Numbered marker | | `Delete` | Delete selected |
-| `H` | Highlighter | | `Esc` | Cancel / deselect |
-| `X` | Pixelate | | `Ctrl+scroll` | Zoom (`Ctrl+0` fit, `Ctrl+1` 100%) |
-| `C` | Crop | | `Scroll` | Resize annotations on the fly |
-| `V` | Select / move | | | |
+| `L` | Line | | `Ctrl+V` | Paste image from clipboard |
+| `P` | Pen | | `Ctrl+Z` | Undo |
+| `M` | Numbered marker | | `Ctrl+Shift+Z` / `Ctrl+Y` | Redo |
+| `H` | Highlighter | | `Delete` | Delete selected |
+| `X` | Pixelate | | `Esc` | Cancel / deselect |
+| `C` | Crop | | `Ctrl+scroll` | Zoom (`Ctrl+0` fit, `Ctrl+1` 100%) |
+| `V` | Select / move | | `Scroll` | Resize annotations on the fly |
 
 ## Usage tips
 
