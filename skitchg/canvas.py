@@ -474,6 +474,21 @@ class Canvas(QGraphicsView):
         elif event.text() and event.text().isprintable():
             item.set_text(item.text + event.text())
 
+    def is_editing_text(self):
+        return self._editing_text is not None
+
+    def paste_text(self, text):
+        """Append clipboard text to the annotation being edited (Ctrl+V)."""
+        item = self._editing_text
+        if item is None or not text:
+            return
+        text = text.replace("\r\n", "\n").replace("\r", "\n")
+        if not isinstance(item, TextItem):
+            text = text.replace("\n", " ")  # markers are single-line
+        text = "".join(ch for ch in text if ch == "\n" or ch.isprintable())
+        if text:
+            item.set_text(item.text + text)
+
     def _editable_item_at(self, view_pos):
         for item in self.items(view_pos):
             if isinstance(item, (TextItem, MarkerItem)):

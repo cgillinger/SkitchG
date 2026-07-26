@@ -239,6 +239,33 @@ def test_smoke():
     win.copy_to_clipboard()
     assert not QGuiApplication.clipboard().image().isNull()
 
+    # Paste image from clipboard: becomes a new document with no source path
+    clip_img = QImage(320, 240, QImage.Format_ARGB32_Premultiplied)
+    clip_img.fill(QColor("#AA3366"))
+    QGuiApplication.clipboard().setImage(clip_img)
+    win4 = MainWindow()
+    win4.paste_from_clipboard()
+    assert win4.canvas.has_image()
+    assert win4.canvas.base_image().width() == 320
+    assert win4.source_path is None
+    assert "Pasted image" in win4.windowTitle()
+    assert win4._default_save_path().endswith("annotated.png")
+
+    # Ctrl+V while editing a text annotation pastes text, not the image
+    QGuiApplication.clipboard().setText("from clipboard")
+    win4.canvas._create_text(QPointF(10, 10))
+    win4.canvas._editing_text.set_text("pasted: ")
+    win4.paste_from_clipboard()
+    assert win4.canvas._editing_text.text == "pasted: from clipboard"
+    assert win4.canvas.base_image().width() == 320  # image untouched
+    win4.canvas.commit_text_edit()
+
+    # Multi-line paste keeps newlines in text items
+    win4.canvas._create_text(QPointF(20, 20))
+    win4.canvas.paste_text("line1\r\nline2")
+    assert win4.canvas._editing_text.text == "line1\nline2"
+    win4.canvas.cancel_text_edit()
+
 
 if __name__ == "__main__":
     test_smoke()

@@ -68,7 +68,8 @@ class MainWindow(QMainWindow):
         self._build_menus()
         self.setAcceptDrops(True)
         self.statusBar().showMessage(
-            "Open an image (Ctrl+O) or drop one here — then drag an arrow and Ctrl+C.")
+            "Open (Ctrl+O), paste (Ctrl+V) or drop an image here — "
+            "then drag an arrow and Ctrl+C.")
         self.canvas.set_tool("arrow")
 
     # ------------------------------------------------------------------ UI
@@ -121,6 +122,12 @@ class MainWindow(QMainWindow):
         self.copy_action.setToolTip("Copy annotated image to clipboard (Ctrl+C)")
         self.copy_action.triggered.connect(self.copy_to_clipboard)
         bar.addAction(self.copy_action)
+
+        self.paste_action = QAction("Paste", self)
+        self.paste_action.setShortcut(QKeySequence.Paste)
+        self.paste_action.setToolTip("Paste image from clipboard (Ctrl+V)")
+        self.paste_action.triggered.connect(self.paste_from_clipboard)
+        bar.addAction(self.paste_action)
 
         bar.addSeparator()
 
@@ -181,6 +188,7 @@ class MainWindow(QMainWindow):
         file_menu.addAction(self.save_action)
         file_menu.addAction(self.save_as_action)
         file_menu.addAction(self.copy_action)
+        file_menu.addAction(self.paste_action)
         file_menu.addSeparator()
         quit_action = QAction("Quit", self)
         quit_action.setShortcut(QKeySequence.Quit)
@@ -326,10 +334,44 @@ class MainWindow(QMainWindow):
         QGuiApplication.clipboard().setImage(image)
         self.statusBar().showMessage("Annotated image copied to clipboard.", 4000)
 
+    def paste_from_clipboard(self):
+        # The Ctrl+V window shortcut fires before the canvas sees the key,
+        # so text-annotation editing must be routed here explicitly.
+        clipboard = QGuiApplication.clipboard()
+        if self.canvas.is_editing_text():
+            self.canvas.paste_text(clipboard.mimeData().text())
+            return
+        image = clipboard.image()
+        if not image.isNull():
+            self.load_clipboard_image(image)
+            return
+        for url in clipboard.mimeData().urls():
+            if url.isLocalFile() and self.load_file(url.toLocalFile()):
+                return
+        self.statusBar().showMessage("Clipboard does not contain an image.", 4000)
+
+    def load_clipboard_image(self, image, confirm=True):
+        if confirm and not self._confirm_discard():
+            return False
+        self.canvas.load_image(image.convertToFormat(QImage.Format_ARGB32_Premultiplied))
+        self.source_path = None
+        self.save_path = None
+        self.canvas.undo_stack.setClean()
+        self.canvas.set_tool("arrow")
+        self._update_title()
+        self.statusBar().showMessage(
+            "Pasted image from clipboard — arrow tool active.", 6000)
+        return True
+
     # ----------------------------------------------------------------- misc
 
     def _update_title(self):
-        name = os.path.basename(self.source_path) if self.source_path else "No image"
+        if self.source_path:
+            name = os.path.basename(self.source_path)
+        elif self.canvas.has_image():
+            name = "Pasted image"
+        else:
+            name = "No image"
         dirty = "" if self.canvas.undo_stack.isClean() else " •"
         self.setWindowTitle(f"{name}{dirty} — SkitchG")
 
