@@ -167,6 +167,13 @@ image editing. SkitchG is an annotation tool — that focus is the feature.
 - [Marianne](https://github.com/takecy/marianne) — Skitch-style annotator built with Tauri
 - [Flameshot](https://flameshot.org/) / [ksnip](https://github.com/ksnip/ksnip) — screenshot-first tools with annotation
 
+## A note about this project
+
+This is a hobby project I built for my own use and share as-is, in case
+it's useful to someone with the same need. I develop it to fit my own
+workflow, so I may not respond to issues or take on pull requests — that's
+a matter of time and focus, not disinterest. Use at your own risk.
+
 ## License & credits
 
 [MIT](LICENSE) © Christian Gillinger
