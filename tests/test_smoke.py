@@ -231,6 +231,40 @@ def test_smoke():
     assert px != QColor("#FFFFFF") and px != QColor("#FFD400"), px.name()
     assert px.red() > 200 and px.blue() < 255, "not a translucent tint"
 
+    # Erase area: auto background fill + eyedropper override
+    from skitchg.items import EraseItem
+    erase_img = QImage(400, 300, QImage.Format_ARGB32_Premultiplied)
+    erase_img.fill(QColor("#EEDDCC"))
+    pe = QPainter(erase_img)
+    pe.fillRect(150, 100, 100, 80, QColor("#112233"))  # the "reply field"
+    pe.end()
+    erase_path = os.path.join(workdir, "erase.png")
+    assert erase_img.save(erase_path)
+    win5 = MainWindow()
+    assert win5.load_file(erase_path, confirm=False)
+    c5 = win5.canvas
+    # The ring around the rect is pure background → sampled fill matches it
+    fill = c5._sample_border_color(QRectF(145, 95, 110, 90))
+    assert fill == QColor("#EEDDCC"), fill.name()
+    er = EraseItem(QRectF(145, 95, 110, 90), fill)
+    c5.scene().addItem(er)
+    c5.undo_stack.push(AddItemCommand(c5, er))
+    out5 = render_annotated(c5)
+    assert out5.pixelColor(200, 140) == QColor("#EEDDCC")  # dark box covered
+    # Eyedropper picks a pixel color and restyles the selected erase area
+    c5.set_tool("erase")
+    er.setSelected(True)
+    c5._pick_erase_fill(QPointF(200, 140))  # base image still has the box
+    assert c5._erase_fill == QColor("#112233")
+    assert er.color == QColor("#112233")
+    c5.undo_stack.undo()
+    assert er.color == QColor("#EEDDCC")
+    # New areas use the picked fill until Esc resets to auto-sampling
+    assert c5._erase_fill_for(QRectF(0, 0, 10, 10)) == QColor("#112233")
+    c5.cancel_current()
+    assert c5._erase_fill is None
+    assert c5._erase_fill_for(QRectF(20, 20, 10, 10)) == QColor("#EEDDCC")
+
     # Save default path + clipboard
     assert win._default_save_path().endswith("test_input_annotated.png")
     win._write_image(win._default_save_path())

@@ -42,6 +42,7 @@ TOOLS = [
     ("text", "Text", "T"),
     ("marker", "Numbered marker", "M"),
     ("pixelate", "Pixelate", "X"),
+    ("erase", "Erase area", "D"),
     ("crop", "Crop", "C"),
 ]
 
@@ -95,6 +96,9 @@ class MainWindow(QMainWindow):
             bar.addAction(action)
             self._tool_actions[name] = action
         self._tool_actions["arrow"].setChecked(True)
+        self._tool_actions["erase"].setToolTip(
+            "Erase area (D) — cover with the surrounding background color;\n"
+            "Alt-click or right-click picks the fill color from the image")
 
     def _build_top_bar(self):
         bar = QToolBar("Actions", self)
@@ -238,6 +242,11 @@ class MainWindow(QMainWindow):
         action = self._tool_actions.get(tool)
         if action is not None and not action.isChecked():
             action.setChecked(True)
+        if tool == "erase":
+            self.statusBar().showMessage(
+                "Erase: drag over what you want gone — filled with the "
+                "surrounding background color. Alt-click / right-click = "
+                "eyedropper, or pick a palette color.", 8000)
 
     def _sync_size_buttons(self):
         # Wheel-adjusted size: no preset is active, so uncheck S/M/L to make

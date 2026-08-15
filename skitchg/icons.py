@@ -85,6 +85,14 @@ def make_icon(name, color):
                     col.setAlpha(255 if (i + j) % 4 == 0 else 130)
                     p.setBrush(col)
                     p.drawRect(4 + i * 4.5, 4 + j * 4.5, 4.5, 4.5)
+    elif name == "erase":
+        p.save()
+        p.translate(13, 11.5)
+        p.rotate(-35)
+        p.drawRoundedRect(QRectF(-8.5, -4.5, 17, 9), 2, 2)
+        p.drawLine(QPointF(-1.5, -4.5), QPointF(-1.5, 4.5))
+        p.restore()
+        p.drawLine(QPointF(7, 22.5), QPointF(20, 22.5))
     elif name == "crop":
         p.drawLine(8, 3, 8, 18)
         p.drawLine(8, 18, 23, 18)

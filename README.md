@@ -13,7 +13,7 @@ Open an image → drag a big pink arrow → `Ctrl+C` → paste. Done.
 [![Qt for Python](https://img.shields.io/badge/GUI-PySide6%20%2F%20Qt6-41cd52?logo=qt&logoColor=white)](https://doc.qt.io/qtforpython-6/)
 [![Platform: Linux](https://img.shields.io/badge/platform-Linux-FCC624?logo=linux&logoColor=black)](#install)
 [![License: MIT](https://img.shields.io/badge/license-MIT-green)](LICENSE)
-[![Version](https://img.shields.io/badge/version-0.6.0-orange)](https://github.com/cgillinger/SkitchG/releases)
+[![Version](https://img.shields.io/badge/version-0.7.0-orange)](https://github.com/cgillinger/SkitchG/releases)
 
 <img src="docs/demo-annotations.png" alt="SkitchG annotations demo — thick pink Skitch-style arrows, outlined text, rectangle, ellipse and pixelate on light and dark backgrounds" width="700">
 
@@ -53,6 +53,9 @@ No accounts. No cloud. No layers. No dialogs you didn't ask for.
 - ✋ **Grab anything to move it** — clicking an existing annotation moves it
   no matter which tool is active; you only draw on empty areas
 - 🔒 **Pixelate** tool for hiding sensitive information (names, emails, keys)
+- 🧽 **Erase area** — cover part of the image with a solid fill auto-picked
+  from the surrounding background, or eyedropper any color from the image —
+  e.g. remove your own reply box from a copied comment thread
 - ✂️ Crop
 - ↕️ Select, move and reshape annotations with drag handles
 - ↩️ Full undo/redo for every action
@@ -70,7 +73,7 @@ No accounts. No cloud. No layers. No dialogs you didn't ask for.
 
 <div align="center">
 <img src="docs/markers-demo.png" alt="SkitchG numbered markers — pin-shaped badges with numbers and directional pointer tails" width="700">
-<img src="docs/app-window.png" alt="SkitchG application window on Linux — vertical tool bar, color palette, selected arrow with drag handles" width="700">
+<img src="docs/app-window.png" alt="SkitchG application window on Linux — vertical tool bar, color palette, and the erase tool covering a reply field with the sampled background color" width="700">
 </div>
 
 ## Install
@@ -115,6 +118,7 @@ on image files.
 | `X` | Pixelate | | `Esc` | Cancel / deselect |
 | `C` | Crop | | `Ctrl+scroll` | Zoom (`Ctrl+0` fit, `Ctrl+1` 100%) |
 | `V` | Select / move | | `Scroll` | Resize annotations on the fly |
+| `D` | Erase area | | | |
 
 ## Usage tips
 
@@ -129,6 +133,13 @@ needed), or drag its endpoint handles to reshape it.
 1, 2, 3…), or click and drag to aim the pointer tail at the exact spot.
 Double-click a marker to change its label (up to 3 characters, e.g. `12`
 or `A`). Great for step-by-step instructions.
+
+**Erase area** — drag over the thing you want gone (your own reply box in a
+copied comment thread, a stray UI element). The rectangle is filled with the
+color of the surrounding background, sampled automatically while you drag.
+Need a specific color instead? Alt-click or right-click anywhere in the
+image to eyedropper it, or pick a palette swatch — both also recolor a
+selected erase area. `Esc` returns to automatic background fill.
 
 **Colors & sizes** — swatches in the top bar (default: strong pink that
 reads on almost anything). `XS`/`S`/`M`/`L` set stroke thickness and text

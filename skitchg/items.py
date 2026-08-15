@@ -780,6 +780,36 @@ class MarkerItem(AnnotationItem):
             self.paint_selection(painter)
 
 
+class EraseItem(_RectBasedItem):
+    """Covers a rectangular area with a solid fill — for removing UI elements
+    (reply boxes, buttons, …) from screenshots.
+
+    The fill is auto-sampled from the background around the rectangle by the
+    canvas when the area is drawn; the eyedropper (Alt-click / right-click
+    with the erase tool) or a palette swatch overrides it.
+    """
+
+    def __init__(self, rect, color):
+        super().__init__(rect, color, 0.0, outline=False)
+
+    def boundingRect(self):
+        return self.rect.adjusted(-2, -2, 2, 2)
+
+    def shape(self):
+        path = QPainterPath()
+        path.addRect(self.rect)
+        return path
+
+    def paint(self, painter, option, widget=None):
+        # No antialiasing: the fill must butt seamlessly against the
+        # background pixels it was sampled from.
+        painter.setRenderHint(painter.RenderHint.Antialiasing, False)
+        painter.setPen(Qt.NoPen)
+        painter.setBrush(self.color)
+        painter.drawRect(self.rect)
+        self.paint_selection(painter)
+
+
 class PixelateItem(_RectBasedItem):
     """Pixelates the underlying base image region (for sensitive info)."""
 
