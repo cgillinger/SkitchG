@@ -18,6 +18,7 @@ from .items import (
     AnnotationItem,
     ArrowItem,
     EllipseItem,
+    EraseItem,
     HandleItem,
     HighlightItem,
     LineItem,
@@ -79,6 +80,7 @@ class Canvas(QGraphicsView):
 
         self._temp_item = None       # item being drawn right now
         self._drag_start = None
+        self._erase_fill = None      # eyedropper override; None = auto-sample
         self._crop_overlay = None
         self._editing_text = None    # TextItem in edit mode
         self._edit_old_state = None  # state before re-editing existing text
@@ -197,6 +199,15 @@ class Canvas(QGraphicsView):
     # ------------------------------------------------------------- mouse/keys
 
     def mousePressEvent(self, event):
+        # Eyedropper for the erase tool: Alt-click or right-click picks the
+        # fill color from the image instead of drawing.
+        if (self.has_image() and self.tool == "erase"
+                and (event.button() == Qt.RightButton
+                     or (event.button() == Qt.LeftButton
+                         and event.modifiers() & Qt.AltModifier))):
+            self._pick_erase_fill(self.mapToScene(event.position().toPoint()))
+            return
+
         if not self.has_image() or event.button() != Qt.LeftButton:
             super().mousePressEvent(event)
             return
@@ -272,6 +283,9 @@ class Canvas(QGraphicsView):
             self._temp_item = HighlightItem([pos], self.current_color, w, False)
         elif self.tool == "pixelate":
             self._temp_item = PixelateItem(QRectF(pos, pos), self.base_image, self.current_color, w)
+        elif self.tool == "erase":
+            self._temp_item = EraseItem(QRectF(pos, pos),
+                                        self._erase_fill_for(QRectF(pos, pos)))
         elif self.tool == "crop":
             self._crop_overlay = QGraphicsRectItem(QRectF(pos, pos))
             pen = QPen(QColor("#FFFFFF"), 0, Qt.DashLine)
@@ -292,8 +306,12 @@ class Canvas(QGraphicsView):
         item = self._temp_item
         if isinstance(item, (ArrowItem, LineItem)):
             item.set_points(self._drag_start, pos)
-        elif isinstance(item, (RectItem, EllipseItem, PixelateItem)):
+        elif isinstance(item, (RectItem, EllipseItem, PixelateItem, EraseItem)):
             item.set_rect(QRectF(self._drag_start, pos))
+            if isinstance(item, EraseItem) and self._erase_fill is None:
+                # Live auto-fill: keep matching the background around the
+                # rectangle as it grows.
+                item.set_style(color=self._sample_border_color(item.rect))
         elif isinstance(item, PenItem):
             item.add_point(pos)
         elif isinstance(item, MarkerItem):
@@ -386,6 +404,7 @@ class Canvas(QGraphicsView):
         Qt.Key_T: "text",
         Qt.Key_M: "marker",
         Qt.Key_X: "pixelate",
+        Qt.Key_D: "erase",
         Qt.Key_C: "crop",
     }
 
@@ -495,6 +514,56 @@ class Canvas(QGraphicsView):
                 return item
         return None
 
+    # ------------------------------------------------------------------ erase
+
+    def _erase_fill_for(self, rect):
+        if self._erase_fill is not None:
+            return QColor(self._erase_fill)
+        return self._sample_border_color(rect)
+
+    def _sample_border_color(self, rect):
+        """Guess the local background: the per-channel median of the image
+        pixels in a thin ring just outside `rect` (clamped to the image)."""
+        image = self._image
+        ring = rect.toAlignedRect().adjusted(-3, -3, 3, 3).intersected(image.rect())
+        if ring.isEmpty():
+            return QColor(Qt.white)
+        left, top = ring.left(), ring.top()
+        right, bottom = ring.right(), ring.bottom()
+        # Cap the sample count so live resampling during the drag stays cheap.
+        step = max(1, (2 * (ring.width() + ring.height())) // 320)
+        points = [(x, top) for x in range(left, right + 1, step)]
+        points += [(x, bottom) for x in range(left, right + 1, step)]
+        points += [(left, y) for y in range(top, bottom + 1, step)]
+        points += [(right, y) for y in range(top, bottom + 1, step)]
+        channels = ([], [], [])
+        for x, y in points:
+            color = image.pixelColor(x, y)
+            channels[0].append(color.red())
+            channels[1].append(color.green())
+            channels[2].append(color.blue())
+        mid = len(points) // 2
+        return QColor(*(sorted(values)[mid] for values in channels))
+
+    def _pick_erase_fill(self, scene_pos):
+        """Eyedropper: take the fill color from an image pixel. Recolors any
+        selected erase areas and becomes the fill for new ones, until Esc or
+        a tool switch returns to automatic background sampling."""
+        x, y = int(scene_pos.x()), int(scene_pos.y())
+        if not self._image.rect().contains(x, y):
+            return
+        color = self._image.pixelColor(x, y)
+        self._erase_fill = QColor(color)
+        targets = [i for i in self.scene().selectedItems() if isinstance(i, EraseItem)]
+        if targets:
+            self.undo_stack.push(
+                StyleCommand(self, [(i, {"color": QColor(color)}) for i in targets]))
+        window = self.window()
+        if hasattr(window, "statusBar"):
+            window.statusBar().showMessage(
+                f"Erase fill set to {color.name().upper()} — "
+                "Esc returns to automatic background fill", 4000)
+
     def _next_marker_number(self):
         numbers = [int(i.text) for i in self.annotation_items()
                    if isinstance(i, MarkerItem) and i.text.isdigit()]
@@ -529,6 +598,7 @@ class Canvas(QGraphicsView):
             self.scene().removeItem(self._crop_overlay)
             self._crop_overlay = None
         self._drag_start = None
+        self._erase_fill = None  # eyedropper override ends with Esc/tool switch
         if deselect:
             self.scene().clearSelection()
 
