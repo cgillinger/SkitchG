@@ -2,7 +2,7 @@
 
 import os
 
-from PySide6.QtCore import QSize, Qt
+from PySide6.QtCore import QSize, Qt, QTimer
 from PySide6.QtGui import (
     QAction,
     QActionGroup,
@@ -12,6 +12,7 @@ from PySide6.QtGui import (
     QKeySequence,
 )
 from PySide6.QtWidgets import (
+    QApplication,
     QFileDialog,
     QMainWindow,
     QMessageBox,
@@ -20,12 +21,14 @@ from PySide6.QtWidgets import (
 )
 
 from .canvas import Canvas
+from .capture import capture_to_file
 from .export import render_annotated
 from .icons import make_color_icon, make_icon
 from .palette import DEFAULT_STROKE, PALETTE, STROKE_SIZES
 
-# Native Linux file dialogs match glob patterns case-sensitively,
-# so uppercase variants (IMG_0001.JPG from cameras/iPhones) are listed too.
+# Linux file dialogs match glob patterns case-sensitively, so uppercase
+# variants (IMG_0001.JPG from cameras/iPhones) are listed too; harmless on
+# Windows, whose dialogs ignore case.
 IMAGE_FILTER = (
     "Images (*.png *.PNG *.jpg *.JPG *.jpeg *.JPEG *.webp *.WEBP *.bmp *.BMP);;"
     "All files (*)"
@@ -111,6 +114,13 @@ class MainWindow(QMainWindow):
         self.open_action.triggered.connect(self.open_dialog)
         bar.addAction(self.open_action)
 
+        self.screenshot_action = QAction(make_icon("screenshot", self._icon_color),
+                                         "New screenshot", self)
+        self.screenshot_action.setShortcut(QKeySequence("Ctrl+Shift+N"))
+        self.screenshot_action.setToolTip("Capture a screen region (Ctrl+Shift+N)")
+        self.screenshot_action.triggered.connect(self.new_screenshot)
+        bar.addAction(self.screenshot_action)
+
         self.save_action = QAction("Save", self)
         self.save_action.setShortcut(QKeySequence.Save)
         self.save_action.triggered.connect(self.save)
@@ -188,6 +198,7 @@ class MainWindow(QMainWindow):
     def _build_menus(self):
         file_menu = self.menuBar().addMenu("&File")
         file_menu.addAction(self.open_action)
+        file_menu.addAction(self.screenshot_action)
         file_menu.addSeparator()
         file_menu.addAction(self.save_action)
         file_menu.addAction(self.save_as_action)
@@ -262,6 +273,24 @@ class MainWindow(QMainWindow):
             return
         start_dir = os.path.dirname(self.source_path) if self.source_path else ""
         path, _ = QFileDialog.getOpenFileName(self, "Open image", start_dir, IMAGE_FILTER)
+        if path:
+            self.load_file(path, confirm=False)
+
+    def new_screenshot(self):
+        if not self._confirm_discard():
+            return
+        # Hiding the only window must not end the app, and the window needs a
+        # moment to actually disappear before the screen is grabbed.
+        self._quit_on_close = QApplication.quitOnLastWindowClosed()
+        QApplication.setQuitOnLastWindowClosed(False)
+        self.hide()
+        QTimer.singleShot(300, lambda: capture_to_file(self._screenshot_done))
+
+    def _screenshot_done(self, path, ok):
+        QApplication.setQuitOnLastWindowClosed(self._quit_on_close)
+        self.show()
+        self.raise_()
+        self.activateWindow()
         if path:
             self.load_file(path, confirm=False)
 

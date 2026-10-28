@@ -1,0 +1,10 @@
+[Desktop Entry]
+Type=Application
+Name=SkitchG Screenshot
+GenericName=Screenshot and annotate
+Comment=Capture a region and open it in SkitchG
+Exec=skitchg-screenshot
+Icon=skitchg
+Terminal=false
+Categories=Graphics;Utility;
+X-KDE-Shortcuts=Print
