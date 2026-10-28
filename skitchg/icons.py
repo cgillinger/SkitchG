@@ -1,7 +1,9 @@
 """Programmatically drawn tool icons — no asset files needed."""
 
 from PySide6.QtCore import QPointF, QRectF, Qt
-from PySide6.QtGui import QColor, QFont, QIcon, QPainter, QPainterPath, QPen, QPixmap
+from PySide6.QtGui import QColor, QIcon, QPainter, QPainterPath, QPen, QPixmap
+
+from .fonts import sans_font
 
 SIZE = 26
 
@@ -57,7 +59,7 @@ def make_icon(name, color):
         p.setPen(QPen(c, 2.4, Qt.SolidLine, Qt.RoundCap))
         p.drawLine(4, 22, 9, 22)
     elif name == "text":
-        font = QFont("Sans Serif", int(s * 0.62))
+        font = sans_font(int(s * 0.62))
         font.setBold(True)
         p.setFont(font)
         p.drawText(QRectF(0, 0, s, s), Qt.AlignCenter, "A")
@@ -71,7 +73,7 @@ def make_icon(name, color):
         p.setPen(Qt.NoPen)
         p.setBrush(c)
         p.drawPath(head.united(tail))
-        font = QFont("Sans Serif", int(s * 0.34))
+        font = sans_font(int(s * 0.34))
         font.setBold(True)
         p.setFont(font)
         p.setPen(QColor("#FFFFFF") if c.lightness() < 128 else QColor("#333333"))
@@ -98,6 +100,12 @@ def make_icon(name, color):
         p.drawLine(8, 18, 23, 18)
         p.drawLine(3, 8, 18, 8)
         p.drawLine(18, 8, 18, 23)
+    elif name == "screenshot":
+        p.setPen(QPen(c, 2, Qt.DashLine, Qt.FlatCap))
+        p.drawRect(QRectF(4.5, 4.5, 17, 17))
+        p.setPen(QPen(c, 2.4, Qt.SolidLine, Qt.RoundCap))
+        p.drawLine(13, 9, 13, 17)
+        p.drawLine(9, 13, 17, 13)
     elif name == "outline":
         p.setPen(QPen(QColor("#888888"), 5, Qt.SolidLine, Qt.RoundCap))
         p.drawLine(6, 18, 20, 8)

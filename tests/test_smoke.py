@@ -10,12 +10,14 @@ import tempfile
 os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from PySide6.QtCore import QPointF, QRect, QRectF  # noqa: E402
+from PySide6.QtCore import QPoint, QPointF, QRect, QRectF, QStandardPaths, Qt  # noqa: E402
 from PySide6.QtGui import QColor, QGuiApplication, QImage, QPainter  # noqa: E402
+from PySide6.QtTest import QTest  # noqa: E402
 from PySide6.QtWidgets import QApplication  # noqa: E402
 
 app = QApplication.instance() or QApplication([])
 
+from skitchg.capture import screenshots_dir, split_by_screens  # noqa: E402
 from skitchg.commands import AddItemCommand, CropCommand  # noqa: E402
 from skitchg.export import render_annotated  # noqa: E402
 from skitchg.items import (  # noqa: E402
@@ -27,6 +29,7 @@ from skitchg.items import (  # noqa: E402
     TextItem,
 )
 from skitchg.main_window import MainWindow  # noqa: E402
+from skitchg.snip import SnipSession  # noqa: E402
 
 
 def test_smoke():
@@ -313,6 +316,96 @@ def test_smoke():
     win4.canvas.cancel_text_edit()
 
 
+def test_capture():
+    # Two side-by-side screens (logical 100x80 each) captured at 2x scale.
+    whole = QImage(400, 160, QImage.Format_ARGB32)
+    whole.fill(QColor("#FF0000"))
+    p = QPainter(whole)
+    p.fillRect(200, 0, 200, 160, QColor("#0000FF"))
+    p.end()
+    parts = split_by_screens(whole, [QRect(0, 0, 100, 80), QRect(100, 0, 100, 80)])
+    assert [(i.width(), i.height()) for i in parts] == [(200, 160), (200, 160)]
+    assert parts[0].pixelColor(10, 10) == QColor("#FF0000")
+    assert parts[1].pixelColor(10, 10) == QColor("#0000FF")
+    # Screens with a negative origin (left of / above the primary)
+    parts = split_by_screens(whole, [QRect(-100, 0, 100, 80), QRect(0, 0, 100, 80)])
+    assert parts[1].pixelColor(0, 0) == QColor("#0000FF")
+    assert split_by_screens(QImage(), [QRect(0, 0, 10, 10)]) == []
+
+    # Screenshot directory is created, but never in the real home
+    QStandardPaths.setTestModeEnabled(True)
+    home = tempfile.mkdtemp(prefix="skitchg-home-")
+    old_home = os.environ.get("HOME")
+    os.environ["HOME"] = home
+    try:
+        d = screenshots_dir()
+        assert os.path.isdir(d)
+        assert old_home is None or not d.startswith(old_home + os.sep)
+    finally:
+        QStandardPaths.setTestModeEnabled(False)
+        if old_home is not None:
+            os.environ["HOME"] = old_home
+
+
+def _run_session(action):
+    """Open one overlay over a synthetic 2x image, run action(overlay)."""
+    screen = QGuiApplication.primaryScreen()
+    size = screen.geometry().size()
+    image = QImage(size * 2, QImage.Format_ARGB32)
+    image.fill(QColor("#00FF00"))
+    p = QPainter(image)
+    p.fillRect(QRect(40, 60, 100, 50), QColor("#FF00FF"))  # image pixels
+    p.end()
+    session = SnipSession([(screen, image)])
+    results = []
+    session.finished.connect(results.append)
+    session.start()
+    overlay = session._overlays[0]
+    action(overlay)
+    assert len(results) == 1
+    assert not overlay.isVisible()
+    return results[0]
+
+
+def test_snip():
+    # Drag widget rect (20,30)-(70,55) = image rect (40,60) 100x50
+    def drag(o):
+        QTest.mousePress(o, Qt.LeftButton, Qt.NoModifier, QPoint(20, 30))
+        QTest.mouseMove(o, QPoint(50, 40))
+        QTest.mouseRelease(o, Qt.LeftButton, Qt.NoModifier, QPoint(70, 55))
+    crop = _run_session(drag)
+    assert (crop.width(), crop.height()) == (100, 50)
+    assert crop.pixelColor(0, 0) == QColor("#FF00FF")
+    assert crop.pixelColor(99, 49) == QColor("#FF00FF")
+
+    # Dragging backwards gives the same rectangle
+    def drag_back(o):
+        QTest.mousePress(o, Qt.LeftButton, Qt.NoModifier, QPoint(70, 55))
+        QTest.mouseRelease(o, Qt.LeftButton, Qt.NoModifier, QPoint(20, 30))
+    crop = _run_session(drag_back)
+    assert (crop.width(), crop.height()) == (100, 50)
+
+    # A click without a real drag captures the whole screen
+    def click(o):
+        QTest.mouseClick(o, Qt.LeftButton, Qt.NoModifier, QPoint(30, 30))
+    crop = _run_session(click)
+    assert crop.width() == QGuiApplication.primaryScreen().geometry().width() * 2
+
+    # Esc and right-click cancel
+    assert _run_session(lambda o: QTest.keyClick(o, Qt.Key_Escape)) is None
+    assert _run_session(
+        lambda o: QTest.mouseClick(o, Qt.RightButton, Qt.NoModifier, QPoint(5, 5))) is None
+
+
+def test_new_screenshot_action():
+    win = MainWindow()
+    assert win.screenshot_action.shortcut().toString() == "Ctrl+Shift+N"
+    import skitchg.tray  # noqa: F401 - must import cleanly on Linux
+
+
 if __name__ == "__main__":
     test_smoke()
+    test_capture()
+    test_snip()
+    test_new_screenshot_action()
     print("ALL SMOKE TESTS PASSED")

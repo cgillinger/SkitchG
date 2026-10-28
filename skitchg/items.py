@@ -10,7 +10,6 @@ import math
 from PySide6.QtCore import QPointF, QRectF, Qt
 from PySide6.QtGui import (
     QColor,
-    QFont,
     QFontMetricsF,
     QPainterPath,
     QPainterPathStroker,
@@ -18,6 +17,7 @@ from PySide6.QtGui import (
 )
 from PySide6.QtWidgets import QGraphicsItem
 
+from .fonts import sans_font
 from .palette import OUTLINE_COLOR, SHADOW_COLOR
 
 
@@ -517,7 +517,7 @@ class TextItem(AnnotationItem):
         self.editing = False
 
     def font(self):
-        font = QFont("Sans Serif")
+        font = sans_font()
         font.setPointSizeF(self.point_size)
         font.setBold(True)
         return font
@@ -809,7 +809,7 @@ class MarkerItem(AnnotationItem):
 
         # The number, centered in the head, shrunk to fit longer labels.
         display = self.text + ("‸" if self.editing else "")
-        font = QFont("Sans Serif")
+        font = sans_font()
         font.setBold(True)
         font.setPixelSize(max(8, int(self.radius * (1.15 if len(display) <= 1 else
                                                     0.95 if len(display) == 2 else 0.72))))

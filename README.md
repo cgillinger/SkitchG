@@ -103,11 +103,34 @@ Installs the `skitchg` command in `~/.local/bin`, adds SkitchG to the
 application menu, and registers it for **right-click → Open With → SkitchG**
 on image files.
 
-It also installs `skitchg-screenshot`, which captures a screen region and
-opens it straight in SkitchG (`skitchg-screenshot full|window|monitor` for
-other modes). On KDE Plasma **Print** and **Meta+Shift+S** are moved to it
-from Spectacle, which keeps its other shortcuts. Captures are saved in your Pictures folder's
+SkitchG has its own screenshot tool: `skitchg --capture` freezes the screen,
+you drag a rectangle (a plain click captures the whole screen, Esc or
+right-click cancels) and the region opens straight in SkitchG. Inside the app
+it is **File → New screenshot** (`Ctrl+Shift+N`). On Wayland the screen is
+read through Spectacle, `grim` or `gnome-screenshot` (whichever is installed);
+on X11 Qt grabs it directly.
+
+The installer adds a "SkitchG Screenshot" menu entry running `skitchg --capture`.
+On KDE Plasma **Print** and **Meta+Shift+S** are moved to it from Spectacle,
+which keeps its other shortcuts. Captures are saved in your Pictures folder's
 screenshot directory, so closing SkitchG without saving loses nothing.
+
+## Windows
+
+Download `SkitchG-Setup.exe` from the
+[`windows-latest` release](../../releases/tag/windows-latest) (rebuilt on every
+push to `main`; a portable zip is attached too). The installer can start a
+small tray helper at login (`SkitchG.exe --tray`): left-click the tray icon or
+press a global hotkey to take a screenshot.
+
+The hotkey is **Print Screen** if Windows lets SkitchG have it, otherwise
+**Ctrl+Alt+S**; the tray icon's tooltip says which one is active. Windows
+keeps Print Screen for the Snipping Tool by default - to free it, turn off
+*Settings → Accessibility → Keyboard → Use the Print screen button to open
+screen capturing*, then restart the helper from the Start menu.
+
+The Windows build is made by `.github/workflows/windows.yml` (PyInstaller +
+Inno Setup, see `packaging/windows/`).
 
 ## Keyboard shortcuts
 

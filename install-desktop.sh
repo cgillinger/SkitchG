@@ -10,7 +10,8 @@ ICON_DIR="$HOME/.local/share/icons/hicolor/512x512/apps"
 mkdir -p "$BIN_DIR" "$APP_DIR" "$ICON_DIR"
 
 ln -sf "$DIR/skitchg-launcher.sh" "$BIN_DIR/skitchg"
-ln -sf "$DIR/skitchg-screenshot.sh" "$BIN_DIR/skitchg-screenshot"
+# Older versions installed a skitchg-screenshot wrapper; capture is built in now.
+rm -f "$BIN_DIR/skitchg-screenshot"
 
 # Icon: install into hicolor at common sizes AND reference it by absolute
 # path in the .desktop file — menus pick up the absolute path immediately,
@@ -26,7 +27,7 @@ sed -e "s|^Exec=skitchg|Exec=$BIN_DIR/skitchg|" \
     -e "s|^Icon=skitchg$|Icon=$DIR/icons/draw.png|" \
     "$DIR/skitchg.desktop" > "$APP_DIR/skitchg.desktop"
 
-sed -e "s|^Exec=skitchg-screenshot|Exec=$BIN_DIR/skitchg-screenshot|" \
+sed -e "s|^Exec=skitchg --capture|Exec=$BIN_DIR/skitchg --capture|" \
     -e "s|^Icon=skitchg$|Icon=$DIR/icons/draw.png|" \
     "$DIR/skitchg-screenshot.desktop" > "$APP_DIR/skitchg-screenshot.desktop"
 
