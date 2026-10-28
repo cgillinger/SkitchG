@@ -87,6 +87,7 @@ class Canvas(QGraphicsView):
         self._move_snapshot = []     # (item, pos) at mouse press in select mode
         self._handle_drag = False    # a reshape handle grabbed the mouse
         self._body_drag = False      # an annotation body grabbed the mouse
+        self._text_click = None      # (item, press pos): text tool press on a block
         self._auto_fit = True        # refit on resize until the user zooms manually
 
     # ------------------------------------------------------------------ image
@@ -215,11 +216,9 @@ class Canvas(QGraphicsView):
         pos = self.mapToScene(event.position().toPoint())
 
         if self._editing_text is not None:
-            # Clicking outside the text being edited commits it.
-            if self._editing_text not in self.items(event.position().toPoint()):
-                self.commit_text_edit()
-            else:
-                return
+            # Clicking anywhere commits the text being edited. Pressing on it
+            # again grabs it for moving; a plain click reopens it for editing.
+            self.commit_text_edit()
 
         # Reshape handles on a selected annotation always win over drawing a
         # new item, no matter which tool is active.
@@ -236,8 +235,16 @@ class Canvas(QGraphicsView):
 
         if self.tool == "text":
             item = self._editable_item_at(event.position().toPoint())
-            if item is not None:
-                self.start_text_edit(item)
+            body = next((i for i in self.items(event.position().toPoint())
+                         if isinstance(i, AnnotationItem)), None)
+            if item is not None or body is not None:
+                # Drag to move the annotation; a click without dragging on a
+                # text block edits it.
+                self._text_click = (item, pos) if item is not None else None
+                self._body_drag = True
+                self._move_snapshot = [(i, QPointF(i.pos()))
+                                       for i in self.annotation_items()]
+                super().mousePressEvent(event)
             else:
                 self._create_text(pos)
             return
@@ -315,7 +322,15 @@ class Canvas(QGraphicsView):
         elif isinstance(item, PenItem):
             item.add_point(pos)
         elif isinstance(item, MarkerItem):
-            item.set_geometry(head=pos)
+            # The pointer follows the drag: the tip rides under the cursor and
+            # the head trails behind toward where the drag started. A tiny
+            # jitter keeps the default upright pin on the click point.
+            d = pos - self._drag_start
+            if math.hypot(d.x(), d.y()) < item.radius * 0.5:
+                item.set_geometry(tip=self._drag_start, head=self._drag_start
+                                  + QPointF(0, -item.default_offset()))
+            else:
+                item.set_geometry(tip=pos, head=self._drag_start)
         elif self._crop_overlay is not None:
             self._crop_overlay.setRect(QRectF(self._drag_start, pos).normalized())
 
@@ -332,6 +347,16 @@ class Canvas(QGraphicsView):
         if self._body_drag:
             self._body_drag = False
             super().mouseReleaseEvent(event)
+            click, self._text_click = self._text_click, None
+            if click is not None:
+                item, start = click
+                if (self.mapToScene(event.position().toPoint()) - start).manhattanLength() < MIN_DRAG:
+                    # Just a click: undo any jitter and open it for editing.
+                    for i, old_pos in self._move_snapshot:
+                        i.setPos(old_pos)
+                    self._move_snapshot = []
+                    self.start_text_edit(item)
+                    return
             self._push_moves()
             return
 
