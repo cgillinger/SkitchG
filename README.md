@@ -4,16 +4,17 @@
 
 # SkitchG
 
-**Fast, minimal Skitch-inspired image annotation for Linux.**
+**Fast, minimal Skitch-inspired screenshot annotation for Linux and Windows.**
 
-Open an image → drag a big pink arrow → `Ctrl+C` → paste. Done.
+Take a screenshot (or open an image) → drag a big pink arrow → `Ctrl+C` → paste. Done.
 
 [![CI](https://github.com/cgillinger/SkitchG/actions/workflows/ci.yml/badge.svg)](https://github.com/cgillinger/SkitchG/actions/workflows/ci.yml)
+[![Windows build](https://github.com/cgillinger/SkitchG/actions/workflows/windows.yml/badge.svg)](https://github.com/cgillinger/SkitchG/actions/workflows/windows.yml)
 [![Python 3.10+](https://img.shields.io/badge/python-3.10%2B-blue?logo=python&logoColor=white)](https://www.python.org/)
 [![Qt for Python](https://img.shields.io/badge/GUI-PySide6%20%2F%20Qt6-41cd52?logo=qt&logoColor=white)](https://doc.qt.io/qtforpython-6/)
-[![Platform: Linux](https://img.shields.io/badge/platform-Linux-FCC624?logo=linux&logoColor=black)](#install)
+[![Platform: Linux | Windows](https://img.shields.io/badge/platform-Linux%20%7C%20Windows-FCC624)](#install)
 [![License: MIT](https://img.shields.io/badge/license-MIT-green)](LICENSE)
-[![Version](https://img.shields.io/badge/version-0.7.0-orange)](https://github.com/cgillinger/SkitchG/releases)
+[![Version](https://img.shields.io/badge/version-0.8.0-orange)](https://github.com/cgillinger/SkitchG/releases)
 
 <img src="docs/demo-annotations.png" alt="SkitchG annotations demo — thick pink Skitch-style arrows, outlined text, rectangle, ellipse and pixelate on light and dark backgrounds" width="700">
 
@@ -26,27 +27,35 @@ Open an image → drag a big pink arrow → `Ctrl+C` → paste. Done.
 [Skitch](https://evernote.com/products/skitch) made visual communication
 effortless: point at things with big, bold arrows instead of writing three
 paragraphs. Evernote discontinued Skitch everywhere except macOS — leaving
-Linux users without a true equivalent.
+Linux and Windows users without a true equivalent.
 
-**SkitchG is a Skitch alternative for Linux** (Linux Mint, Ubuntu, Fedora,
-and any desktop with Qt support). It is *not* a screenshot tool like
-Flameshot or ksnip, and *not* an image editor like GIMP — it is a focused
-**image annotation tool** for existing images, optimized for one flow:
+**SkitchG is a Skitch alternative for Linux and Windows** (Linux Mint,
+Ubuntu, Fedora, KDE, GNOME, Windows 10/11). Like Skitch it is screenshot-first
+but annotation-focused — *not* a full capture suite like Flameshot or ksnip,
+and *not* an image editor like GIMP. It is optimized for one flow:
 
 ```text
-1. Open image   2. Drag arrow   3. Ctrl+C   4. Paste in chat / ticket / doc
+1. Screenshot key   2. Drag a region   3. Drag arrow   4. Ctrl+C   5. Paste
 ```
+
+Existing images work just as well: open one, or paste it from the clipboard.
 
 No accounts. No cloud. No layers. No dialogs you didn't ask for.
 
 ## Features
 
+- 📸 **Built-in screenshot tool** — press the screenshot key, drag a region
+  on the frozen screen, and it opens straight in the editor (Print /
+  Meta+Shift+S on KDE, Print Screen or Ctrl+Alt+S on Windows,
+  `Ctrl+Shift+N` inside the app)
 - 🎯 **Skitch-style arrows** — pointed tail widening into a compact filled
   head, flat strong color just like the original (optional white outline +
   shadow for busy backgrounds)
 - 📍 **Numbered markers** — Skitch-style pins with an auto-incrementing
-  number in the head; drag to aim the pointer tail, double-click to relabel
-- 🅰️ **Bold outlined text** — click, type, Enter. Done.
+  number in the head; the tip follows your drag so it lands exactly where you
+  release, double-click to relabel
+- 🅰️ **Bold outlined text** — click, type, Enter. Done. Drag a text block to
+  move it, pull its corner handles to scale it
 - ⬜ Rectangle, ellipse, line, freehand pen
 - 🖍️ **Highlighter** — wide translucent freehand stroke that tints without
   hiding what's underneath (pick yellow for the classic look)
@@ -78,59 +87,60 @@ No accounts. No cloud. No layers. No dialogs you didn't ask for.
 
 ## Install
 
+### Windows
+
+Download `SkitchG-Setup.exe` from the
+[`windows-latest` release](https://github.com/cgillinger/SkitchG/releases/tag/windows-latest)
+(rebuilt on every push to `main`; a portable zip is attached too). The
+installer isn't code-signed, so SmartScreen will warn — choose *More info →
+Run anyway*.
+
+The installer adds SkitchG to the Start menu and to **right-click → Open
+with** for images, and can start a small tray helper at login
+(`SkitchG.exe --tray`): left-click the tray icon or press the global hotkey
+to take a screenshot.
+
+The hotkey is **Print Screen** if Windows lets SkitchG have it, otherwise
+**Ctrl+Alt+S**; the tray icon's tooltip says which one is active. Windows
+keeps Print Screen for the Snipping Tool by default — to free it, turn off
+*Settings → Accessibility → Keyboard → Use the Print screen button to open
+screen capturing*, then restart the helper from the Start menu.
+
+### Linux
+
 Requires Python 3.10+ on any Linux desktop.
 
 ```bash
 git clone https://github.com/cgillinger/SkitchG.git
 cd SkitchG
-python3 -m venv .venv
-.venv/bin/pip install -r requirements.txt
-```
-
-Run it:
-
-```bash
-./skitchg-launcher.sh image.jpg        # or: .venv/bin/python app.py image.jpg
-```
-
-### Desktop integration (optional)
-
-```bash
 ./install-desktop.sh
 ```
 
-Installs the `skitchg` command in `~/.local/bin`, adds SkitchG to the
-application menu, and registers it for **right-click → Open With → SkitchG**
-on image files.
+The launcher builds its own virtualenv on first start. `install-desktop.sh`
+installs the `skitchg` and `skitchg-screenshot` commands in `~/.local/bin`,
+adds SkitchG to the application menu, and registers it for **right-click →
+Open With → SkitchG** on image files. On KDE Plasma it also moves **Print**
+and **Meta+Shift+S** from Spectacle to SkitchG (Spectacle keeps its other
+shortcuts).
 
-SkitchG has its own screenshot tool: `skitchg --capture` freezes the screen,
-you drag a rectangle (a plain click captures the whole screen, Esc or
-right-click cancels) and the region opens straight in SkitchG. Inside the app
-it is **File → New screenshot** (`Ctrl+Shift+N`). On Wayland the screen is
-read through Spectacle, `grim` or `gnome-screenshot` (whichever is installed);
-on X11 Qt grabs it directly.
+Run it by hand:
 
-The installer adds a "SkitchG Screenshot" menu entry running `skitchg-screenshot` (same as `skitchg --capture`).
-On KDE Plasma **Print** and **Meta+Shift+S** are moved to it from Spectacle,
-which keeps its other shortcuts. Captures are saved in your Pictures folder's
-screenshot directory, so closing SkitchG without saving loses nothing.
+```bash
+skitchg image.jpg          # open an image
+skitchg-screenshot         # take a screenshot (same as: skitchg --capture)
+```
 
-## Windows
+On Wayland the screen is read through Spectacle, `grim` or
+`gnome-screenshot` (whichever is installed); on X11 Qt grabs it directly.
+On other desktops than KDE, bind `skitchg-screenshot` to a key in your
+desktop's shortcut settings.
 
-Download `SkitchG-Setup.exe` from the
-[`windows-latest` release](../../releases/tag/windows-latest) (rebuilt on every
-push to `main`; a portable zip is attached too). The installer can start a
-small tray helper at login (`SkitchG.exe --tray`): left-click the tray icon or
-press a global hotkey to take a screenshot.
+### Screenshots
 
-The hotkey is **Print Screen** if Windows lets SkitchG have it, otherwise
-**Ctrl+Alt+S**; the tray icon's tooltip says which one is active. Windows
-keeps Print Screen for the Snipping Tool by default - to free it, turn off
-*Settings → Accessibility → Keyboard → Use the Print screen button to open
-screen capturing*, then restart the helper from the Start menu.
-
-The Windows build is made by `.github/workflows/windows.yml` (PyInstaller +
-Inno Setup, see `packaging/windows/`).
+The screen freezes and dims; drag a rectangle and the region opens straight
+in SkitchG. A plain click captures the whole screen, `Esc` or right-click
+cancels. Every capture is saved in your Pictures folder's screenshot
+directory first, so closing SkitchG without saving loses nothing.
 
 ## Keyboard shortcuts
 
@@ -147,7 +157,7 @@ Inno Setup, see `packaging/windows/`).
 | `X` | Pixelate | | `Esc` | Cancel / deselect |
 | `C` | Crop | | `Ctrl+scroll` | Zoom (`Ctrl+0` fit, `Ctrl+1` 100%) |
 | `V` | Select / move | | `Scroll` | Resize annotations on the fly |
-| `D` | Erase area | | | |
+| `D` | Erase area | | `Ctrl+Shift+N` | New screenshot |
 
 ## Usage tips
 
@@ -156,10 +166,12 @@ at, release. Grab any existing annotation to move it (no tool switch
 needed), or drag its endpoint handles to reshape it.
 
 **Text** — click, type. `Enter` commits, `Shift+Enter` adds a line,
-`Esc` cancels. Double-click existing text to edit.
+`Esc` cancels. Click existing text to edit it, drag it to move it, and pull
+a corner handle to make it bigger or smaller.
 
 **Numbered markers** — click to drop a pin (numbers count up automatically:
-1, 2, 3…), or click and drag to aim the pointer tail at the exact spot.
+1, 2, 3…), or click and drag: the pointer tip follows the mouse and lands
+exactly where you release.
 Double-click a marker to change its label (up to 3 characters, e.g. `12`
 or `A`). Great for step-by-step instructions.
 
@@ -184,7 +196,7 @@ otherwise they set the style for new annotations.
 ## Project layout
 
 ```text
-app.py                  entry point
+app.py                  entry point (--capture, --tray)
 skitchg/
   main_window.py        menus, toolbars, open/save/copy
   canvas.py             QGraphicsView canvas + tool interaction
@@ -193,7 +205,13 @@ skitchg/
   export.py             flatten image + annotations for save/copy
   icons.py              programmatically drawn icons
   palette.py            colors, stroke sizes, constants
-tests/test_smoke.py     offscreen end-to-end smoke test (runs in CI)
+  capture.py            screen grabbing per platform + capture-and-save flow
+  snip.py               frozen-screen region picker
+  tray.py               Windows tray helper + global hotkey
+  fonts.py              cross-platform UI font
+packaging/windows/      Inno Setup installer script
+tests/test_smoke.py     offscreen end-to-end smoke test (runs in CI on
+                        Linux and Windows)
 ```
 
 ## Non-goals
@@ -204,6 +222,7 @@ image editing. SkitchG is an annotation tool — that focus is the feature.
 ## Related projects
 
 - [Skitch](https://evernote.com/products/skitch) — the original (macOS only)
+- [ShareX](https://getsharex.com/) — feature-packed Windows screenshot suite
 - [Marianne](https://github.com/takecy/marianne) — Skitch-style annotator built with Tauri
 - [Flameshot](https://flameshot.org/) / [ksnip](https://github.com/ksnip/ksnip) — screenshot-first tools with annotation
 
@@ -220,6 +239,7 @@ a matter of time and focus, not disinterest. Use at your own risk.
 
 App icon: <a href="https://www.flaticon.com/free-icons/stationary" title="stationary icons">Stationary icons created by Sergei Kokota - Flaticon</a>
 
-<sub>Keywords: image annotation tool, Skitch alternative Linux, annotate
-screenshots, arrow annotation, markup images, pixelate sensitive data,
-PySide6, Qt6, Linux Mint, Ubuntu</sub>
+<sub>Keywords: image annotation tool, Skitch alternative Linux, Skitch
+alternative Windows, screenshot tool, annotate screenshots, arrow
+annotation, markup images, pixelate sensitive data, PySide6, Qt6, Linux
+Mint, Ubuntu, Fedora, KDE, Windows 11</sub>

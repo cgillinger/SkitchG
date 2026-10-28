@@ -1,3 +1,3 @@
-"""SkitchG — a fast, Skitch-inspired image annotation app for Linux."""
+"""SkitchG — a fast, Skitch-inspired image annotation app for Linux and Windows."""
 
-__version__ = "0.7.0"
+__version__ = "0.8.0"
