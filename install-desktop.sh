@@ -10,8 +10,7 @@ ICON_DIR="$HOME/.local/share/icons/hicolor/512x512/apps"
 mkdir -p "$BIN_DIR" "$APP_DIR" "$ICON_DIR"
 
 ln -sf "$DIR/skitchg-launcher.sh" "$BIN_DIR/skitchg"
-# Older versions installed a skitchg-screenshot wrapper; capture is built in now.
-rm -f "$BIN_DIR/skitchg-screenshot"
+ln -sf "$DIR/skitchg-screenshot.sh" "$BIN_DIR/skitchg-screenshot"
 
 # Icon: install into hicolor at common sizes AND reference it by absolute
 # path in the .desktop file — menus pick up the absolute path immediately,
@@ -27,11 +26,12 @@ sed -e "s|^Exec=skitchg|Exec=$BIN_DIR/skitchg|" \
     -e "s|^Icon=skitchg$|Icon=$DIR/icons/draw.png|" \
     "$DIR/skitchg.desktop" > "$APP_DIR/skitchg.desktop"
 
-sed -e "s|^Exec=skitchg --capture|Exec=$BIN_DIR/skitchg --capture|" \
+sed -e "s|^Exec=skitchg-screenshot|Exec=$BIN_DIR/skitchg-screenshot|" \
     -e "s|^Icon=skitchg$|Icon=$DIR/icons/draw.png|" \
     "$DIR/skitchg-screenshot.desktop" > "$APP_DIR/skitchg-screenshot.desktop"
 
 update-desktop-database "$APP_DIR" 2>/dev/null || true
+command -v kbuildsycoca6 >/dev/null && kbuildsycoca6 >/dev/null 2>&1 || true
 gtk-update-icon-cache "$HOME/.local/share/icons/hicolor" 2>/dev/null || true
 
 echo "Installed. Run 'skitchg image.jpg' or find SkitchG in the menu."
@@ -55,6 +55,8 @@ if [ "${XDG_CURRENT_DESKTOP:-}" = KDE ] && command -v kwriteconfig6 >/dev/null 2
             local comp=$1 name=$2 n=$3; shift 3
             local seqs=()
             for k in "$@"; do seqs+=(4 "$k" 0 0 0); done
+            # Re-register so KWin drops a cached Exec from an older install.
+            accel unregister ss "$comp" _launch || true
             accel doRegister as 4 "$comp" _launch "$name" "$name" &&
             accel setShortcutKeys "asa(ai)u" 4 "$comp" _launch "$name" "$name" "$n" "${seqs[@]}" 0x6
         }
