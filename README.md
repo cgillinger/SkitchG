@@ -103,6 +103,12 @@ Installs the `skitchg` command in `~/.local/bin`, adds SkitchG to the
 application menu, and registers it for **right-click → Open With → SkitchG**
 on image files.
 
+It also installs `skitchg-screenshot`, which captures a screen region and
+opens it straight in SkitchG (`skitchg-screenshot full|window|monitor` for
+other modes). On KDE Plasma **Print** and **Meta+Shift+S** are moved to it
+from Spectacle, which keeps its other shortcuts. Captures are saved in your Pictures folder's
+screenshot directory, so closing SkitchG without saving loses nothing.
+
 ## Keyboard shortcuts
 
 | Key | Action | | Key | Action |
