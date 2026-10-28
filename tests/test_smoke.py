@@ -145,6 +145,16 @@ def test_smoke():
     assert canvas._next_marker_number() == 1
     stack.redo()
 
+    # Stamps: a symbol instead of a number, fixed color, not counted
+    stamp = MarkerItem(QPointF(300, 300), QColor("#39B54A"), 20.0, stamp="check")
+    canvas.scene().addItem(stamp)
+    stack.push(AddItemCommand(canvas, stamp))
+    assert stamp.text == "" and canvas._next_marker_number() == 2
+    win.set_stamp("heart")
+    assert canvas.current_stamp == "heart"
+    win.set_stamp(None)
+    stack.undo()
+
     # Crop with undo/redo
     stack.push(CropCommand(canvas, QRect(50, 50, 500, 400)))
     assert canvas.base_image().width() == 500

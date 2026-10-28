@@ -2,14 +2,17 @@
 
 import os
 
-from PySide6.QtCore import QSize, Qt, QTimer
+from PySide6.QtCore import QPointF, QSize, Qt, QTimer
 from PySide6.QtGui import (
     QAction,
     QActionGroup,
     QGuiApplication,
+    QIcon,
     QImage,
     QImageReader,
     QKeySequence,
+    QPainter,
+    QPixmap,
 )
 from PySide6.QtWidgets import (
     QApplication,
@@ -24,7 +27,8 @@ from .canvas import Canvas
 from .capture import capture_to_file
 from .export import render_annotated
 from .icons import make_color_icon, make_icon
-from .palette import DEFAULT_STROKE, PALETTE, STROKE_SIZES
+from .items import MarkerItem
+from .palette import DEFAULT_COLOR, DEFAULT_STROKE, PALETTE, STAMPS, STROKE_SIZES
 
 # Linux file dialogs match glob patterns case-sensitively, so uppercase
 # variants (IMG_0001.JPG from cameras/iPhones) are listed too; harmless on
@@ -43,11 +47,23 @@ TOOLS = [
     ("pen", "Pen", "P"),
     ("highlight", "Highlighter", "H"),
     ("text", "Text", "T"),
-    ("marker", "Numbered marker", "M"),
+    ("marker", "Marker / stamp", "M"),
     ("pixelate", "Pixelate", "X"),
     ("erase", "Erase area", "D"),
     ("crop", "Crop", "C"),
 ]
+
+
+def make_marker_icon(color, stamp=None):
+    """A small left-pointing pin, like the stamp row in Skitch."""
+    pixmap = QPixmap(22, 22)
+    pixmap.fill(Qt.transparent)
+    item = MarkerItem(QPointF(1.5, 11), color, 6.8, text="1", stamp=stamp)
+    item.set_geometry(head=QPointF(22, 11))  # clamped close to the tip
+    p = QPainter(pixmap)
+    item.paint(p, None)
+    p.end()
+    return QIcon(pixmap)
 
 
 class MainWindow(QMainWindow):
@@ -160,6 +176,22 @@ class MainWindow(QMainWindow):
 
         bar.addSeparator()
 
+        # Marker kinds: numbered pin or one of the Skitch stamps. Only shown
+        # while the marker tool is active.
+        self._stamp_buttons = {}
+        self._stamp_widgets = []
+        for key, label, color in [(None, "Numbered (1, 2, 3…)", DEFAULT_COLOR)] + STAMPS:
+            btn = QToolButton(self)
+            btn.setToolTip(label if key is None else f"{label} stamp")
+            btn.setAutoRaise(True)
+            btn.setCheckable(True)
+            btn.setIcon(make_marker_icon(color, key))
+            btn.clicked.connect(lambda checked, k=key: self.set_stamp(k))
+            self._stamp_widgets.append(bar.addWidget(btn))
+            self._stamp_buttons[key] = btn
+        self._stamp_buttons[None].setChecked(True)
+        self._stamp_widgets.append(bar.addSeparator())
+
         # Stroke sizes
         self._size_buttons = {}
         for size_name in STROKE_SIZES:
@@ -238,6 +270,11 @@ class MainWindow(QMainWindow):
             btn.setChecked(c == color)
         self.canvas.apply_style_to_selection(color=color)
 
+    def set_stamp(self, key):
+        self.canvas.current_stamp = key
+        for k, btn in self._stamp_buttons.items():
+            btn.setChecked(k == key)
+
     def set_size(self, size_name):
         self.canvas.current_size_name = size_name
         self.canvas.size_multiplier = 1.0  # presets reset the wheel adjustment
@@ -253,6 +290,8 @@ class MainWindow(QMainWindow):
         action = self._tool_actions.get(tool)
         if action is not None and not action.isChecked():
             action.setChecked(True)
+        for widget_action in self._stamp_widgets:
+            widget_action.setVisible(tool == "marker")
         if tool == "erase":
             self.statusBar().showMessage(
                 "Erase: drag over what you want gone — filled with the "

@@ -51,8 +51,9 @@ No accounts. No cloud. No layers. No dialogs you didn't ask for.
 - 🎯 **Skitch-style arrows** — pointed tail widening into a compact filled
   head, flat strong color just like the original (optional white outline +
   shadow for busy backgrounds)
-- 📍 **Numbered markers** — Skitch-style pins with an auto-incrementing
-  number in the head; the tip follows your drag so it lands exactly where you
+- 📍 **Numbered markers & stamps** — Skitch-style pins with an
+  auto-incrementing number in the head, or one of the classic stamps
+  (✕ wrong, ! warning, ? question, ✓ OK, ♥ love); the tip follows your drag so it lands exactly where you
   release, double-click to relabel
 - 🅰️ **Bold outlined text** — click, type, Enter. Done. Drag a text block to
   move it, pull its corner handles to scale it
@@ -100,11 +101,9 @@ with** for images, and can start a small tray helper at login
 (`SkitchG.exe --tray`): left-click the tray icon or press the global hotkey
 to take a screenshot.
 
-The hotkey is **Print Screen** if Windows lets SkitchG have it, otherwise
-**Ctrl+Alt+S**; the tray icon's tooltip says which one is active. Windows
-keeps Print Screen for the Snipping Tool by default — to free it, turn off
-*Settings → Accessibility → Keyboard → Use the Print screen button to open
-screen capturing*, then restart the helper from the Start menu.
+The helper takes over **Print Screen** from the Snipping Tool, and
+**Ctrl+Alt+S** works too; the tray icon's tooltip shows the active keys.
+Quit the helper from its tray menu to give Print Screen back to Windows.
 
 ### Linux
 
@@ -152,7 +151,7 @@ directory first, so closing SkitchG without saving loses nothing.
 | `E` | Ellipse | | `Ctrl+C` | Copy image to clipboard |
 | `L` | Line | | `Ctrl+V` | Paste image from clipboard |
 | `P` | Pen | | `Ctrl+Z` | Undo |
-| `M` | Numbered marker | | `Ctrl+Shift+Z` / `Ctrl+Y` | Redo |
+| `M` | Numbered marker / stamp | | `Ctrl+Shift+Z` / `Ctrl+Y` | Redo |
 | `H` | Highlighter | | `Delete` | Delete selected |
 | `X` | Pixelate | | `Esc` | Cancel / deselect |
 | `C` | Crop | | `Ctrl+scroll` | Zoom (`Ctrl+0` fit, `Ctrl+1` 100%) |
@@ -173,7 +172,10 @@ a corner handle to make it bigger or smaller.
 1, 2, 3…), or click and drag: the pointer tip follows the mouse and lands
 exactly where you release.
 Double-click a marker to change its label (up to 3 characters, e.g. `12`
-or `A`). Great for step-by-step instructions.
+or `A`). Great for step-by-step instructions. With the marker tool active,
+the top bar shows the stamp row: pick ✕, !, ?, ✓ or ♥ to drop that stamp
+instead of a number (stamps keep their own colors and don't affect the
+numbering).
 
 **Erase area** — drag over the thing you want gone (your own reply box in a
 copied comment thread, a stray UI element). The rectangle is filled with the
