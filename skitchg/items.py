@@ -505,7 +505,8 @@ class TextItem(AnnotationItem):
     """Bold annotation text with a white outline for readability.
 
     Editing is a simple append/backspace model driven by the canvas:
-    click to place, type, Enter commits, Escape cancels.
+    click to place, type, Enter commits, Escape cancels. Once placed, drag
+    the block to move it and its corner handles to scale it.
     """
 
     def __init__(self, pos, color, point_size, outline=True):
@@ -524,6 +525,7 @@ class TextItem(AnnotationItem):
     def set_text(self, text):
         self.prepareGeometryChange()
         self.text = text
+        self._layout_handles()
         self.update()
 
     def set_style(self, color=None, stroke_width=None, outline=None,
@@ -533,6 +535,7 @@ class TextItem(AnnotationItem):
             self.prepareGeometryChange()
             self.point_size = float(point_size)
         super().set_style(color=color, outline=outline)
+        self._layout_handles()
 
     def get_style(self):
         return {
@@ -550,6 +553,50 @@ class TextItem(AnnotationItem):
 
     def _display_text(self):
         return self.text + ("‸" if self.editing else "")
+
+    # ---- corner handles: drag to scale the text, opposite corner stays put ----
+
+    CORNERS = {"tl": "br", "tr": "bl", "bl": "tr", "br": "tl"}
+
+    def _text_rect(self):
+        metrics = QFontMetricsF(self.font())
+        width = max([metrics.horizontalAdvance(l) for l in self._lines()] + [10.0])
+        return QRectF(0, 0, width, metrics.lineSpacing() * len(self._lines()))
+
+    def _corner(self, role):
+        r = self._text_rect()
+        return {"tl": r.topLeft(), "tr": r.topRight(),
+                "bl": r.bottomLeft(), "br": r.bottomRight()}[role]
+
+    def handle_roles(self):
+        return list(self.CORNERS)
+
+    def handle_pos(self, role):
+        return self._corner(role)
+
+    def begin_handle_drag(self):
+        super().begin_handle_drag()
+        self._resize_start_size = self.point_size
+
+    def handle_moved(self, role, scene_pos):
+        start = self._drag_start_state
+        if start is None:
+            return
+        anchor_role = self.CORNERS[role]
+        # Measure against the geometry at drag start so the scale doesn't drift.
+        self._apply_geometry_state(start)
+        self.prepareGeometryChange()
+        self.setPos(start["pos"])
+        anchor = self.mapToScene(self._corner(anchor_role))
+        grabbed = self.mapToScene(self._corner(role))
+        d0 = math.hypot(grabbed.x() - anchor.x(), grabbed.y() - anchor.y())
+        d1 = math.hypot(scene_pos.x() - anchor.x(), scene_pos.y() - anchor.y())
+        if d0 < 1e-3:
+            return
+        self.point_size = max(6.0, min(400.0, self._resize_start_size * d1 / d0))
+        self.setPos(self.pos() + anchor - self.mapToScene(self._corner(anchor_role)))
+        self._layout_handles()
+        self.update()
 
     def _lines(self):
         return self._display_text().split("\n") or [""]
@@ -605,7 +652,7 @@ class MarkerItem(AnnotationItem):
 
     The tail tip sits on the thing you're pointing at; the head holds an
     auto-incremented number (editable, double-click). Drag while placing
-    to aim the tail in any direction.
+    and the tail follows the mouse: the tip ends up under the cursor.
     """
 
     MAX_CHARS = 3

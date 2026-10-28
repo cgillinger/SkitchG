@@ -85,6 +85,18 @@ def test_smoke():
     text.set_style(point_size=40)
     assert text.point_size == 40
 
+    # Text corner handle: dragging outward scales it, opposite corner fixed
+    anchor = text.mapToScene(text.handle_pos("tl"))
+    corner = text.mapToScene(text.handle_pos("br"))
+    text.begin_handle_drag()
+    text.handle_moved("br", anchor + (corner - anchor) * 1.5)
+    text.end_handle_drag()
+    assert abs(text.point_size - 60) < 0.01
+    moved = text.mapToScene(text.handle_pos("tl")) - anchor
+    assert abs(moved.x()) < 0.5 and abs(moved.y()) < 0.5
+    stack.undo()
+    assert text.point_size == 40
+
     # Text edit flow: commit, discard-empty, cancel
     canvas._create_text(QPointF(50, 50))
     canvas._editing_text.set_text("typed")
