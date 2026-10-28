@@ -52,7 +52,9 @@ def main():
     if "--capture" in sys.argv:
         run_capture(app)
     elif "--tray" in sys.argv:
-        from skitchg.tray import Tray
+        from skitchg.tray import Tray, already_running
+        if already_running():
+            return
         app.setQuitOnLastWindowClosed(False)
         tray = Tray(app)  # noqa: F841 - must stay referenced
     else:

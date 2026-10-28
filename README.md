@@ -100,11 +100,9 @@ with** for images, and can start a small tray helper at login
 (`SkitchG.exe --tray`): left-click the tray icon or press the global hotkey
 to take a screenshot.
 
-The hotkey is **Print Screen** if Windows lets SkitchG have it, otherwise
-**Ctrl+Alt+S**; the tray icon's tooltip says which one is active. Windows
-keeps Print Screen for the Snipping Tool by default — to free it, turn off
-*Settings → Accessibility → Keyboard → Use the Print screen button to open
-screen capturing*, then restart the helper from the Start menu.
+The helper takes over **Print Screen** from the Snipping Tool, and
+**Ctrl+Alt+S** works too; the tray icon's tooltip shows the active keys.
+Quit the helper from its tray menu to give Print Screen back to Windows.
 
 ### Linux
 
