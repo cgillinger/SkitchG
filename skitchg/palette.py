@@ -42,6 +42,17 @@ MARKER_RADII = {
     "L": 24.0,
 }
 
+# Skitch stamps: a marker pin carrying a symbol instead of a number, each
+# with its own fixed color.
+STAMPS = [
+    ("cross", "Wrong", QColor("#E8272C")),
+    ("exclaim", "Warning", QColor("#F7941E")),
+    ("question", "Question", QColor("#1E8FE1")),
+    ("check", "OK", QColor("#39B54A")),
+    ("heart", "Love", QColor("#F5286E")),
+]
+STAMP_COLORS = {key: color for key, _, color in STAMPS}
+
 OUTLINE_COLOR = QColor("#FFFFFF")
 SHADOW_COLOR = QColor(0, 0, 0, 110)
 

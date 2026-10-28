@@ -33,6 +33,7 @@ from .palette import (
     DEFAULT_COLOR,
     DEFAULT_STROKE,
     MARKER_RADII,
+    STAMP_COLORS,
     STROKE_SIZES,
     TEXT_SIZES,
 )
@@ -69,6 +70,7 @@ class Canvas(QGraphicsView):
 
         self.tool = "arrow"
         self.current_color = QColor(DEFAULT_COLOR)
+        self.current_stamp = None  # marker tool: None = numbered, else a STAMPS key
         self.current_size_name = DEFAULT_STROKE
         # Skitch draws arrows/shapes flat; text and pins are always outlined.
         self.current_outline = False
@@ -256,7 +258,8 @@ class Canvas(QGraphicsView):
             body = next((i for i in self.items(event.position().toPoint())
                          if isinstance(i, AnnotationItem)), None)
             if body is not None:
-                if self.tool == "marker" and isinstance(body, MarkerItem):
+                if (self.tool == "marker" and isinstance(body, MarkerItem)
+                        and not body.stamp):
                     self.start_text_edit(body)
                     return
                 self._body_drag = True
@@ -267,9 +270,11 @@ class Canvas(QGraphicsView):
 
         if self.tool == "marker":
             self._drag_start = pos
+            stamp = self.current_stamp
             self._temp_item = MarkerItem(
-                pos, self.current_color, self.marker_radius(),
-                text=str(self._next_marker_number()), outline=self.current_outline)
+                pos, STAMP_COLORS[stamp] if stamp else self.current_color,
+                self.marker_radius(), text=str(self._next_marker_number()),
+                outline=self.current_outline, stamp=stamp)
             self._temp_item.setZValue(self._next_z())
             self.scene().addItem(self._temp_item)
             return
@@ -535,7 +540,8 @@ class Canvas(QGraphicsView):
 
     def _editable_item_at(self, view_pos):
         for item in self.items(view_pos):
-            if isinstance(item, (TextItem, MarkerItem)):
+            if isinstance(item, TextItem) or (isinstance(item, MarkerItem)
+                                              and not item.stamp):
                 return item
         return None
 

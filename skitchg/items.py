@@ -657,12 +657,13 @@ class MarkerItem(AnnotationItem):
 
     MAX_CHARS = 3
 
-    def __init__(self, tip, color, radius, text="1", outline=True):
+    def __init__(self, tip, color, radius, text="1", outline=True, stamp=None):
         super().__init__(color, radius, outline)
         self.tip = QPointF(tip)
         self.radius = float(radius)
         self.head = QPointF(tip.x(), tip.y() - self.default_offset())
-        self.text = text
+        self.text = "" if stamp else text
+        self.stamp = stamp  # a STAMPS key: the head shows a symbol, not text
         self.editing = False
 
     def default_offset(self):
@@ -807,6 +808,11 @@ class MarkerItem(AnnotationItem):
         painter.setBrush(self.color)
         painter.drawPath(path)
 
+        if self.stamp:
+            self._paint_symbol(painter)
+            self.paint_selection(painter)
+            return
+
         # The number, centered in the head, shrunk to fit longer labels.
         display = self.text + ("‸" if self.editing else "")
         font = sans_font()
@@ -825,6 +831,46 @@ class MarkerItem(AnnotationItem):
             painter.drawRect(self.boundingRect())
         else:
             self.paint_selection(painter)
+
+
+    def _paint_symbol(self, painter):
+        """Stamp symbol drawn as vector strokes, so it looks the same on
+        every platform whatever symbol fonts are installed."""
+        r = self.radius
+        c = self.head
+        color = self._text_color()
+        pen = QPen(color, max(1.5, r * 0.26), Qt.SolidLine, Qt.RoundCap, Qt.RoundJoin)
+        painter.setBrush(Qt.NoBrush)
+        painter.setPen(pen)
+        pt = lambda x, y: QPointF(c.x() + x * r, c.y() + y * r)
+        if self.stamp == "cross":
+            painter.drawLine(pt(-0.38, -0.38), pt(0.38, 0.38))
+            painter.drawLine(pt(-0.38, 0.38), pt(0.38, -0.38))
+        elif self.stamp == "check":
+            path = QPainterPath(pt(-0.45, 0.02))
+            path.lineTo(pt(-0.12, 0.34))
+            path.lineTo(pt(0.45, -0.32))
+            painter.drawPath(path)
+        elif self.stamp == "exclaim":
+            painter.drawLine(pt(0, -0.48), pt(0, 0.14))
+            painter.setPen(Qt.NoPen)
+            painter.setBrush(color)
+            painter.drawEllipse(pt(0, 0.43), r * 0.15, r * 0.15)
+        elif self.stamp == "question":
+            path = QPainterPath(pt(-0.3, -0.22))
+            path.cubicTo(pt(-0.3, -0.58), pt(0.32, -0.6), pt(0.32, -0.22))
+            path.cubicTo(pt(0.32, 0.02), pt(0, 0.0), pt(0, 0.18))
+            painter.drawPath(path)
+            painter.setPen(Qt.NoPen)
+            painter.setBrush(color)
+            painter.drawEllipse(pt(0, 0.45), r * 0.14, r * 0.14)
+        elif self.stamp == "heart":
+            path = QPainterPath(pt(0, 0.5))
+            path.cubicTo(pt(-0.62, 0.05), pt(-0.55, -0.55), pt(0, -0.22))
+            path.cubicTo(pt(0.55, -0.55), pt(0.62, 0.05), pt(0, 0.5))
+            painter.setPen(Qt.NoPen)
+            painter.setBrush(color)
+            painter.drawPath(path)
 
 
 class EraseItem(_RectBasedItem):
