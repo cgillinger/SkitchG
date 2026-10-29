@@ -192,8 +192,10 @@ to grow or shrink smoothly, even mid-draw. The outline button toggles the
 white outline + shadow. With a selection, style changes restyle it;
 otherwise they set the style for new annotations.
 
-> **Clipboard note:** on Linux the clipboard is owned by the running app.
-> Keep SkitchG open until you've pasted, or use a clipboard manager.
+> **Clipboard note:** on Wayland, Copy hands the image to `wl-copy`
+> (package `wl-clipboard`), so it stays on the clipboard after SkitchG is
+> closed. Without `wl-copy` — and on X11 — the clipboard is owned by the
+> running app: keep SkitchG open until you've pasted.
 
 ## Project layout
 

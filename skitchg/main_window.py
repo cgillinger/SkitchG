@@ -25,7 +25,7 @@ from PySide6.QtWidgets import (
 
 from .canvas import Canvas
 from .capture import capture_to_file
-from .export import render_annotated
+from .export import copy_image, render_annotated
 from .icons import make_color_icon, make_icon
 from .items import MarkerItem
 from .palette import DEFAULT_COLOR, DEFAULT_STROKE, PALETTE, STAMPS, STROKE_SIZES
@@ -408,7 +408,7 @@ class MainWindow(QMainWindow):
         image = render_annotated(self.canvas)
         if image is None:
             return
-        QGuiApplication.clipboard().setImage(image)
+        copy_image(image)
         self.statusBar().showMessage("Annotated image copied to clipboard.", 4000)
 
     def paste_from_clipboard(self):
