@@ -24,7 +24,7 @@ from PySide6.QtWidgets import (
 )
 
 from .canvas import Canvas
-from .capture import capture_to_file
+from .capture import capture_to_file, include_pointer, set_include_pointer
 from .export import copy_image, render_annotated
 from .icons import make_color_icon, make_icon
 from .items import MarkerItem
@@ -52,6 +52,25 @@ TOOLS = [
     ("erase", "Erase area", "D"),
     ("crop", "Crop", "C"),
 ]
+
+
+def add_pointer_actions(menu, parent):
+    """Add the exclusive "show / hide mouse pointer in screenshots" choice."""
+    group = QActionGroup(parent)
+    current = include_pointer()
+    for label, value in [("Include mouse pointer in screenshot", True),
+                         ("Hide mouse pointer in screenshot", False)]:
+        action = QAction(label, parent)
+        action.setCheckable(True)
+        action.setChecked(current == value)
+        action.triggered.connect(lambda _=False, v=value: set_include_pointer(v))
+        group.addAction(action)
+        menu.addAction(action)
+    # Another window (or the tray) may have changed the setting meanwhile.
+    menu.aboutToShow.connect(
+        lambda: [a.setChecked(include_pointer() == v)
+                 for a, v in zip(group.actions(), (True, False))])
+    return group
 
 
 def make_marker_icon(color, stamp=None):
@@ -231,6 +250,7 @@ class MainWindow(QMainWindow):
         file_menu = self.menuBar().addMenu("&File")
         file_menu.addAction(self.open_action)
         file_menu.addAction(self.screenshot_action)
+        add_pointer_actions(file_menu, self)
         file_menu.addSeparator()
         file_menu.addAction(self.save_action)
         file_menu.addAction(self.save_as_action)

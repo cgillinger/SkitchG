@@ -9,7 +9,7 @@ from PySide6.QtGui import QAction
 from PySide6.QtWidgets import QApplication, QMenu, QSystemTrayIcon
 
 from .capture import capture_to_file
-from .main_window import MainWindow
+from .main_window import MainWindow, add_pointer_actions
 
 WM_HOTKEY = 0x0312
 WM_KEYUP = 0x0101
@@ -125,6 +125,9 @@ class Tray:
             action = QAction(label, menu)
             action.triggered.connect(fn)
             menu.addAction(action)
+            if fn == self.take_screenshot:
+                self._pointer_group = add_pointer_actions(menu, menu)
+                menu.addSeparator()
         self.icon.setContextMenu(menu)
         self.icon.activated.connect(self._on_activated)
         self._menu = menu  # the tray icon does not take ownership
