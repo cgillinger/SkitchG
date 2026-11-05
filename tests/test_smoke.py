@@ -342,6 +342,16 @@ def test_capture():
     assert parts[1].pixelColor(0, 0) == QColor("#0000FF")
     assert split_by_screens(QImage(), [QRect(0, 0, 10, 10)]) == []
 
+    # Tools leave the pointer out unless asked; drawing it paints at the tip
+    from skitchg.capture import _tool_commands, draw_pointer
+    assert all("-p" not in c and "-c" not in c for _, c in _tool_commands("x.png"))
+    assert ["grim", "-c", "x.png"] in [c for _, c in _tool_commands("x.png", True)]
+    blank = QImage(60, 60, QImage.Format_ARGB32)
+    blank.fill(QColor("#00FF00"))
+    draw_pointer(blank, QPoint(10, 10), 2.0)
+    assert blank.pixelColor(13, 25) != QColor("#00FF00")
+    assert blank.pixelColor(50, 10) == QColor("#00FF00")
+
     # Screenshot directory is created, but never in the real home
     QStandardPaths.setTestModeEnabled(True)
     home = tempfile.mkdtemp(prefix="skitchg-home-")

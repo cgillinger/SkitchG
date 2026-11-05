@@ -6,8 +6,8 @@ import subprocess
 import tempfile
 from datetime import datetime
 
-from PySide6.QtCore import QRect, QStandardPaths
-from PySide6.QtGui import QGuiApplication, QImage
+from PySide6.QtCore import QPointF, QRect, QSettings, QStandardPaths, Qt
+from PySide6.QtGui import QColor, QCursor, QGuiApplication, QImage, QPainter, QPainterPath, QPen
 from PySide6.QtWidgets import QMessageBox
 
 from .snip import SnipSession
@@ -16,8 +16,37 @@ from .snip import SnipSession
 DIRECT_PLATFORMS = ("windows", "xcb", "cocoa")
 TOOL_TIMEOUT = 15  # seconds
 
+POINTER_SETTING = "capture/include_pointer"
+
 # The one active session (if any): keeps it alive and blocks double captures.
 _active_session = None
+
+
+def include_pointer():
+    """Whether screenshots should show the mouse pointer (default: hidden)."""
+    return QSettings().value(POINTER_SETTING, False, type=bool)
+
+
+def set_include_pointer(enabled):
+    QSettings().setValue(POINTER_SETTING, bool(enabled))
+
+
+def draw_pointer(image, pos, scale=1.0):
+    """Paint a standard arrow pointer with its tip at pos (image pixels).
+
+    Qt's own screen grab never contains the pointer, so it is drawn on top.
+    """
+    s = 1.25 * scale
+    path = QPainterPath(QPointF(pos))
+    for x, y in [(0, 16), (4, 12.5), (7, 19), (9.5, 18), (6.5, 11.5), (11.5, 11.5)]:
+        path.lineTo(pos.x() + x * s, pos.y() + y * s)
+    path.closeSubpath()
+    painter = QPainter(image)
+    painter.setRenderHint(QPainter.Antialiasing)
+    painter.setPen(QPen(QColor("white"), 1.2 * scale, Qt.SolidLine, Qt.RoundCap, Qt.RoundJoin))
+    painter.setBrush(QColor("black"))
+    painter.drawPath(path)
+    painter.end()
 
 
 def split_by_screens(image, rects):
@@ -41,22 +70,23 @@ def split_by_screens(image, rects):
     return parts
 
 
-def _tool_commands(path):
+def _tool_commands(path, pointer=False):
     # Spectacle is authorized by KWin to capture on Wayland and shows no UI
-    # in background mode; the others cover wlroots and GNOME.
+    # in background mode; the others cover wlroots and GNOME. All of them
+    # leave the pointer out unless asked to include it.
     return [
-        ("spectacle", ["spectacle", "-b", "-n", "-f", "-o", path]),
-        ("grim", ["grim", path]),
-        ("gnome-screenshot", ["gnome-screenshot", "-f", path]),
+        ("spectacle", ["spectacle", "-b", "-n", "-f"] + (["-p"] if pointer else []) + ["-o", path]),
+        ("grim", ["grim"] + (["-c"] if pointer else []) + [path]),
+        ("gnome-screenshot", ["gnome-screenshot"] + (["-p"] if pointer else []) + ["-f", path]),
     ]
 
 
-def _grab_with_tool():
+def _grab_with_tool(pointer=False):
     """Whole-workspace image from the first available external tool."""
     tmp = tempfile.mkdtemp(prefix="skitchg-capture-")
     try:
         path = os.path.join(tmp, "capture.png")
-        for exe, cmd in _tool_commands(path):
+        for exe, cmd in _tool_commands(path, pointer):
             if shutil.which(exe) is None:
                 continue
             try:
@@ -75,10 +105,19 @@ def _grab_with_tool():
 def grab_screens():
     """One frozen image per screen in physical pixels, [] on failure."""
     screens = QGuiApplication.screens()
+    pointer = include_pointer()
     if QGuiApplication.platformName() in DIRECT_PLATFORMS:
         grabbed = [(s, s.grabWindow(0).toImage()) for s in screens]
-        return [(s, i) for s, i in grabbed if not i.isNull()]
-    image = _grab_with_tool()
+        grabbed = [(s, i) for s, i in grabbed if not i.isNull()]
+        if pointer:
+            pos = QCursor.pos()
+            for s, i in grabbed:
+                geo = s.geometry()
+                if geo.contains(pos):
+                    scale = i.width() / geo.width()
+                    draw_pointer(i, (pos - geo.topLeft()) * scale, scale)
+        return grabbed
+    image = _grab_with_tool(pointer)
     parts = split_by_screens(image, [s.geometry() for s in screens])
     return [(s, i) for s, i in zip(screens, parts) if not i.isNull()]
 
