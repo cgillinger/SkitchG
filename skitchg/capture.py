@@ -126,7 +126,7 @@ def screenshots_dir():
     pictures = QStandardPaths.writableLocation(QStandardPaths.PicturesLocation)
     if not pictures:
         pictures = os.path.expanduser("~/Pictures")
-    # Swedish KDE/Spectacle uses "Skärmbilder"; reuse it so captures land
+    # Swedish KDE/Spectacle uses "Skärmbilder"; reuse it so saved captures land
     # next to the user's existing screenshots.
     swedish = os.path.join(pictures, "Skärmbilder")
     path = swedish if os.path.isdir(swedish) else os.path.join(pictures, "Screenshots")
@@ -139,13 +139,12 @@ def new_screenshot_path():
     return os.path.join(screenshots_dir(), f"Screenshot_{stamp}.png")
 
 
-def capture_to_file(on_done):
-    """Grab the screens, let the user pick a region, save it as a PNG.
+def capture_region(on_done):
+    """Grab the screens and let the user pick a region.
 
-    Calls on_done(path, ok): a saved file gives (path, True), a cancelled
-    selection (None, True) and a failure (None, False). The PNG is written
-    before any window opens so nothing is lost if the user closes
-    SkitchG without saving.
+    Calls on_done(image, ok): a selection gives (QImage, True), a cancelled
+    selection (None, True) and a failure (None, False). Nothing is kept on
+    disk; the user decides that with Save.
     """
     global _active_session
     if _active_session is not None:
@@ -168,15 +167,7 @@ def capture_to_file(on_done):
         global _active_session
         _active_session = None
         session.deleteLater()
-        if image is None:
-            on_done(None, True)
-            return
-        path = new_screenshot_path()
-        if not image.save(path, "PNG"):
-            QMessageBox.critical(None, "SkitchG", f"Could not save screenshot to:\n{path}")
-            on_done(None, False)
-            return
-        on_done(path, True)
+        on_done(image, True)
 
     session.finished.connect(on_finished)
     session.start()

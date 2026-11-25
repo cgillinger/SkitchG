@@ -361,6 +361,23 @@ def test_capture():
         d = screenshots_dir()
         assert os.path.isdir(d)
         assert old_home is None or not d.startswith(old_home + os.sep)
+
+        # A capture stays in memory: Copy writes nothing, Save does
+        shot = QImage(120, 80, QImage.Format_ARGB32)
+        shot.fill(QColor("#336699"))
+        win = MainWindow()
+        win.load_screenshot(shot)
+        assert win.source_path is None and win.save_path is None
+        assert "Screenshot" in win.windowTitle()
+        win.copy_to_clipboard()
+        assert not QGuiApplication.clipboard().image().isNull()
+        assert os.listdir(d) == []
+        path = win._default_save_path()
+        assert os.path.dirname(path) == d
+        win._write_image(path)
+        assert os.path.isfile(path) and win.save_path == path
+        win.load_clipboard_image(shot)
+        assert win._default_save_path() != path
     finally:
         QStandardPaths.setTestModeEnabled(False)
         if old_home is not None:

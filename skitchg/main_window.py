@@ -24,7 +24,9 @@ from PySide6.QtWidgets import (
 )
 
 from .canvas import Canvas
-from .capture import capture_to_file, include_pointer, set_include_pointer
+from .capture import (
+    capture_region, include_pointer, new_screenshot_path, set_include_pointer,
+)
 from .export import copy_image, render_annotated
 from .icons import make_color_icon, make_icon
 from .items import MarkerItem
@@ -100,6 +102,8 @@ class MainWindow(QMainWindow):
 
         self.source_path = None   # the opened original file
         self.save_path = None     # where Save writes (never original by default)
+        self._is_screenshot = False   # fresh capture: Save suggests the screenshot folder
+        self._unsaved_name = "Pasted image"  # title while there is no file
 
         self._icon_color = self.palette().windowText().color()
         self._build_tool_bar()
@@ -343,15 +347,22 @@ class MainWindow(QMainWindow):
         self._quit_on_close = QApplication.quitOnLastWindowClosed()
         QApplication.setQuitOnLastWindowClosed(False)
         self.hide()
-        QTimer.singleShot(300, lambda: capture_to_file(self._screenshot_done))
+        QTimer.singleShot(300, lambda: capture_region(self._screenshot_done))
 
-    def _screenshot_done(self, path, ok):
+    def _screenshot_done(self, image, ok):
         QApplication.setQuitOnLastWindowClosed(self._quit_on_close)
         self.show()
         self.raise_()
         self.activateWindow()
-        if path:
-            self.load_file(path, confirm=False)
+        if image is not None:
+            self.load_screenshot(image)
+
+    def load_screenshot(self, image):
+        """Open a fresh capture. It exists only in memory until saved."""
+        self._load_unsaved_image(
+            image, "Screenshot",
+            "Screenshot captured (not saved to disk) — arrow tool active.")
+        self._is_screenshot = True
 
     def load_file(self, path, confirm=True):
         if confirm and not self._confirm_discard():
@@ -366,6 +377,7 @@ class MainWindow(QMainWindow):
         self.canvas.load_image(image.convertToFormat(QImage.Format_ARGB32_Premultiplied))
         self.source_path = path
         self.save_path = None
+        self._is_screenshot = False
         self.canvas.undo_stack.setClean()
         self.canvas.set_tool("arrow")
         self._update_title()
@@ -374,6 +386,8 @@ class MainWindow(QMainWindow):
         return True
 
     def _default_save_path(self):
+        if self._is_screenshot:
+            return new_screenshot_path()
         if not self.source_path:
             return os.path.expanduser("~/annotated.png")
         stem, _ext = os.path.splitext(self.source_path)
@@ -391,7 +405,7 @@ class MainWindow(QMainWindow):
         if not self.canvas.has_image():
             return
         path, _ = QFileDialog.getSaveFileName(
-            self, "Save annotated image", self.save_path or self._default_save_path(),
+            self, "Save image", self.save_path or self._default_save_path(),
             "PNG (*.png);;JPEG (*.jpg *.jpeg)")
         if not path:
             return
@@ -450,15 +464,20 @@ class MainWindow(QMainWindow):
     def load_clipboard_image(self, image, confirm=True):
         if confirm and not self._confirm_discard():
             return False
+        self._load_unsaved_image(
+            image, "Pasted image", "Pasted image from clipboard — arrow tool active.")
+        return True
+
+    def _load_unsaved_image(self, image, name, message):
         self.canvas.load_image(image.convertToFormat(QImage.Format_ARGB32_Premultiplied))
         self.source_path = None
         self.save_path = None
+        self._is_screenshot = False
+        self._unsaved_name = name
         self.canvas.undo_stack.setClean()
         self.canvas.set_tool("arrow")
         self._update_title()
-        self.statusBar().showMessage(
-            "Pasted image from clipboard — arrow tool active.", 6000)
-        return True
+        self.statusBar().showMessage(message, 6000)
 
     # ----------------------------------------------------------------- misc
 
@@ -466,7 +485,7 @@ class MainWindow(QMainWindow):
         if self.source_path:
             name = os.path.basename(self.source_path)
         elif self.canvas.has_image():
-            name = "Pasted image"
+            name = self._unsaved_name
         else:
             name = "No image"
         dirty = "" if self.canvas.undo_stack.isClean() else " •"

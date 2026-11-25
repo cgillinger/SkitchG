@@ -8,7 +8,7 @@ from PySide6.QtCore import QAbstractNativeEventFilter, QDir, QLockFile, QTimer
 from PySide6.QtGui import QAction
 from PySide6.QtWidgets import QApplication, QMenu, QSystemTrayIcon
 
-from .capture import capture_to_file
+from .capture import capture_region
 from .main_window import MainWindow, add_pointer_actions
 
 WM_HOTKEY = 0x0312
@@ -173,18 +173,17 @@ class Tray:
             self.take_screenshot()
 
     def take_screenshot(self):
-        capture_to_file(self._screenshot_done)
+        capture_region(self._screenshot_done)
 
-    def _screenshot_done(self, path, ok):
-        if path:
-            self.open_window(path)
+    def _screenshot_done(self, image, ok):
+        if image is not None:
+            self.open_window().load_screenshot(image)
 
-    def open_window(self, path=None):
+    def open_window(self):
         window = MainWindow()
         # Closed windows stay referenced only until the next one opens.
         self._windows = [w for w in self._windows if w.isVisible()] + [window]
-        if path:
-            window.load_file(path, confirm=False)
         window.show()
         window.raise_()
         window.activateWindow()
+        return window

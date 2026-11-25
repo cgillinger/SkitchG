@@ -72,8 +72,11 @@ No accounts. No cloud. No layers. No dialogs you didn't ask for.
 - 📋 **Copy the rendered image straight to the clipboard** (`Ctrl+C`) — and
   **paste an image from the clipboard** (`Ctrl+V`) to annotate it, e.g.
   straight from your screenshot tool
-- 💾 Export as PNG or JPEG — saves as `name_annotated.png` by default; the
-  **original file is never overwritten** without explicit confirmation
+- 💾 **Nothing is saved unless you press Save** — screenshots live in memory
+  until then, and Copy leaves no file behind
+- 🗂️ Export as PNG or JPEG — an opened image is saved as
+  `name_annotated.png` by default; the **original file is never
+  overwritten** without explicit confirmation
 - 🖼️ Opens PNG, JPG/JPEG, WebP and BMP, respects EXIF rotation
 - 📏 **Always sensibly sized** — default arrow/text/marker sizes scale with
   the image resolution, so they look right on a 24 MP photo and a small
@@ -138,15 +141,17 @@ desktop's shortcut settings.
 
 The screen freezes and dims; drag a rectangle and the region opens straight
 in SkitchG. A plain click captures the whole screen, `Esc` or right-click
-cancels. Every capture is saved in your Pictures folder's screenshot
-directory first, so closing SkitchG without saving loses nothing.
+cancels. The screenshot is not kept on disk until you press Save, which
+suggests a timestamped name in your Pictures folder's screenshot directory.
+Copy only uses the clipboard — closing without Copy or Save discards the
+screenshot.
 
 ## Keyboard shortcuts
 
 | Key | Action | | Key | Action |
 |---|---|---|---|---|
 | `A` | **Arrow** | | `Ctrl+O` | Open image |
-| `T` | Text | | `Ctrl+S` | Save (`name_annotated.png`) |
+| `T` | Text | | `Ctrl+S` | Save |
 | `R` | Rectangle | | `Ctrl+Shift+S` | Save As |
 | `E` | Ellipse | | `Ctrl+C` | Copy image to clipboard |
 | `L` | Line | | `Ctrl+V` | Paste image from clipboard |
@@ -209,7 +214,7 @@ skitchg/
   export.py             flatten image + annotations for save/copy
   icons.py              programmatically drawn icons
   palette.py            colors, stroke sizes, constants
-  capture.py            screen grabbing per platform + capture-and-save flow
+  capture.py            screen grabbing per platform + region capture flow
   snip.py               frozen-screen region picker
   tray.py               Windows tray helper + global hotkey
   fonts.py              cross-platform UI font
