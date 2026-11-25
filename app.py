@@ -14,7 +14,7 @@ from PySide6.QtCore import QTimer
 from PySide6.QtGui import QIcon
 from PySide6.QtWidgets import QApplication
 
-from skitchg.capture import capture_to_file
+from skitchg.capture import capture_region
 from skitchg.main_window import MainWindow
 
 # Bundled data lives in sys._MEIPASS in a PyInstaller build.
@@ -25,13 +25,13 @@ ICON_PATH = os.path.join(BASE_DIR, "icons", "draw.png")
 def run_capture(app):
     windows = []  # keeps the window alive
 
-    def done(path, ok):
-        if path is None:
+    def done(image, ok):
+        if image is None:
             app.exit(0 if ok else 1)
             return
         window = MainWindow()
         windows.append(window)
-        window.load_file(path, confirm=False)
+        window.load_screenshot(image)
         window.show()
         window.raise_()
         window.activateWindow()
@@ -40,7 +40,7 @@ def run_capture(app):
     # The overlays close before the main window exists, which would
     # otherwise count as "last window closed".
     app.setQuitOnLastWindowClosed(False)
-    QTimer.singleShot(0, lambda: capture_to_file(done))
+    QTimer.singleShot(0, lambda: capture_region(done))
 
 
 def main():
